@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brand Events Finder</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #1a1a2e;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 32px;
+        }
+
+        .input-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .hint {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 60px;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #4361ee;
+            box-shadow: 0 0 0 3px rgba(67,97,238,0.1);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #4361ee;
+            color: #fff;
+            margin-top: 16px;
+        }
+
+        .btn-primary:hover { background: #3a56d4; }
+        .btn-primary:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
+
+        .btn-csv {
+            background: #10b981;
+            color: #fff;
+            margin-top: 12px;
+        }
+
+        .btn-csv:hover { background: #059669; }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active { display: block; }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #4361ee;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-text {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* Results */
+        .results { display: none; }
+        .results.active { display: block; }
+
+        .brand-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .brand-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .event-card {
+            padding: 16px;
+            border-left: 4px solid #4361ee;
+            background: #f8fafc;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 12px;
+        }
+
+        .event-card:last-child { margin-bottom: 0; }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .event-title {
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        .event-date {
+            font-size: 0.85rem;
+            color: #666;
+            white-space: nowrap;
+            background: #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .event-description {
+            color: #444;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .event-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .event-category {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+
+        .cat-revenue     { background: #fef3c7; color: #92400e; }
+        .cat-awareness   { background: #dbeafe; color: #1e40af; }
+        .cat-reputation  { background: #fce7f3; color: #9d174d; }
+        .cat-operations  { background: #d1fae5; color: #065f46; }
+        .cat-legal       { background: #fee2e2; color: #991b1b; }
+        .cat-other       { background: #e2e8f0; color: #475569; }
+
+        .event-source a {
+            font-size: 0.85rem;
+            color: #4361ee;
+            text-decoration: none;
+        }
+
+        .event-source a:hover { text-decoration: underline; }
+
+        /* CSV section */
+        .csv-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .csv-section h3 { margin-bottom: 16px; }
+
+        .date-inputs {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .date-inputs .field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .date-inputs input, .date-inputs select {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .error.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Brand Events Finder</h1>
+        <p class="subtitle">Поиск событий, влияющих на бизнес-метрики брендов</p>
+
+        <div class="input-section">
+            <label for="brands">Бренды</label>
+            <p class="hint">Введите названия через запятую: Сбер, Альфастрахование, Добрый, Exeed</p>
+            <textarea id="brands" placeholder="Сбер, Альфастрахование, Добрый"></textarea>
+            <button class="btn btn-primary" id="searchBtn" onclick="startSearch()">Найти события</button>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p class="loading-text">Ищем события по брендам... Это может занять 1-2 минуты.</p>
+        </div>
+
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        let lastResults = null;
+
+        async function startSearch() {
+            const input = document.getElementById('brands').value.trim();
+            if (!input) return;
+
+            const brands = input.split(',').map(b => b.trim()).filter(Boolean);
+            if (brands.length === 0) return;
+
+            const btn = document.getElementById('searchBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const error = document.getElementById('error');
+
+            btn.disabled = true;
+            loading.classList.add('active');
+            results.classList.remove('active');
+            error.classList.remove('active');
+            results.innerHTML = '';
+
+            try {
+                const resp = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ brands }),
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.text();
+                    throw new Error(err);
+                }
+
+                const data = await resp.json();
+                lastResults = data.results;
+                renderResults(data.results);
+            } catch (e) {
+                error.textContent = 'Ошибка: ' + e.message;
+                error.classList.add('active');
+            } finally {
+                btn.disabled = false;
+                loading.classList.remove('active');
+            }
+        }
+
+        function renderResults(brandResults) {
+            const container = document.getElementById('results');
+            container.innerHTML = '';
+
+            // CSV export section
+            const csvSection = document.createElement('div');
+            csvSection.className = 'csv-section';
+            csvSection.innerHTML = `
+                <h3>Экспорт в CSV (dummy-переменные)</h3>
+                <div class="date-inputs">
+                    <div class="field">
+                        <label>Начало</label>
+                        <input type="date" id="csvStart" value="2022-01-01">
+                    </div>
+                    <div class="field">
+                        <label>Конец</label>
+                        <input type="date" id="csvEnd" value="2025-12-31">
+                    </div>
+                    <div class="field">
+                        <label>Частота</label>
+                        <select id="csvFreq">
+                            <option value="D">День</option>
+                            <option value="W">Неделя</option>
+                            <option value="M" selected>Месяц</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-csv" onclick="downloadCsv()">Скачать CSV</button>
+                </div>
+            `;
+            container.appendChild(csvSection);
+
+            const catLabels = {
+                revenue: 'Выручка',
+                awareness: 'Узнаваемость',
+                reputation: 'Репутация',
+                operations: 'Операции',
+                legal: 'Юридическое',
+            };
+
+            for (const br of brandResults) {
+                const section = document.createElement('div');
+                section.className = 'brand-section';
+
+                let eventsHtml = '';
+                for (const ev of br.events) {
+                    const cat = ev.impact_category || 'other';
+                    const catLabel = catLabels[cat] || cat;
+                    eventsHtml += `
+                        <div class="event-card">
+                            <div class="event-header">
+                                <span class="event-title">${esc(ev.event_name)}</span>
+                                <span class="event-date">${esc(ev.event_date)}</span>
+                            </div>
+                            <p class="event-description">${esc(ev.description)}</p>
+                            <div class="event-meta">
+                                <span class="event-category cat-${cat}">${esc(catLabel)}</span>
+                                <span class="event-source">
+                                    <a href="${esc(ev.source_url)}" target="_blank" rel="noopener">${esc(ev.source_title || 'Источник')}</a>
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                section.innerHTML = `
+                    <div class="brand-name">${esc(br.brand)}</div>
+                    ${br.events.length === 0 ? '<p style="color:#888">Событий не найдено</p>' : eventsHtml}
+                `;
+                container.appendChild(section);
+            }
+
+            container.classList.add('active');
+        }
+
+        async function downloadCsv() {
+            if (!lastResults) return;
+
+            const startDate = document.getElementById('csvStart').value;
+            const endDate = document.getElementById('csvEnd').value;
+            const freq = document.getElementById('csvFreq').value;
+
+            try {
+                const resp = await fetch('/api/csv', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        results: lastResults,
+                        start_date: startDate,
+                        end_date: endDate,
+                        freq: freq,
+                    }),
+                });
+
+                if (!resp.ok) throw new Error(await resp.text());
+
+                const blob = await resp.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'brand_events.csv';
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                alert('Ошибка при скачивании CSV: ' + e.message);
+            }
+        }
+
+        function esc(str) {
+            const d = document.createElement('div');
+            d.textContent = str || '';
+            return d.innerHTML;
+        }
+    </script>
+</body>
+</html>
