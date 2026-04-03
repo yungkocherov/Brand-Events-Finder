@@ -4,6 +4,8 @@ from datetime import date
 
 class BrandRequest(BaseModel):
     brands: list[str]
+    year_from: int = 2022
+    year_to: int = 2025
 
 
 class BrandEvent(BaseModel):

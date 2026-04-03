@@ -4,158 +4,237 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brand Events Finder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f7fa;
-            color: #1a1a2e;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
             min-height: 100vh;
         }
 
         .container {
-            max-width: 960px;
+            max-width: 1040px;
             margin: 0 auto;
-            padding: 40px 20px;
+            padding: 48px 24px;
         }
 
-        h1 {
-            font-size: 2rem;
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             margin-bottom: 8px;
         }
 
-        .subtitle {
-            color: #666;
-            margin-bottom: 32px;
+        .header .subtitle {
+            color: #94a3b8;
+            font-size: 1.05rem;
         }
 
+        /* Input section */
         .input-section {
-            background: #fff;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            margin-bottom: 24px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 28px;
         }
 
         label {
             display: block;
             font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 0.95rem;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            color: #cbd5e1;
         }
 
         .hint {
-            font-size: 0.85rem;
-            color: #888;
-            margin-bottom: 8px;
+            font-size: 0.82rem;
+            color: #64748b;
+            margin-bottom: 10px;
         }
 
         textarea {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            padding: 12px 14px;
+            border: 1px solid #334155;
+            border-radius: 10px;
             font-size: 1rem;
-            resize: vertical;
-            min-height: 60px;
+            resize: none;
+            min-height: 52px;
             font-family: inherit;
+            background: #0f172a;
+            color: #e2e8f0;
+            transition: border-color 0.2s;
         }
 
         textarea:focus {
             outline: none;
-            border-color: #4361ee;
-            box-shadow: 0 0 0 3px rgba(67,97,238,0.1);
+            border-color: #818cf8;
+            box-shadow: 0 0 0 3px rgba(129,140,248,0.15);
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 16px;
+            align-items: end;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        select, .csv-section input[type="date"] {
+            padding: 10px 12px;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: inherit;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #818cf8;
         }
 
         .btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
-            padding: 12px 24px;
+            padding: 11px 28px;
             border: none;
-            border-radius: 8px;
-            font-size: 1rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
+            font-family: inherit;
         }
 
         .btn-primary {
-            background: #4361ee;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
             color: #fff;
-            margin-top: 16px;
         }
 
-        .btn-primary:hover { background: #3a56d4; }
-        .btn-primary:disabled {
-            background: #a0aec0;
-            cursor: not-allowed;
-        }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
         .btn-csv {
-            background: #10b981;
+            background: linear-gradient(135deg, #059669, #10b981);
             color: #fff;
-            margin-top: 12px;
         }
 
-        .btn-csv:hover { background: #059669; }
+        .btn-csv:hover { opacity: 0.9; }
 
         /* Loading */
         .loading {
             display: none;
             text-align: center;
-            padding: 40px;
+            padding: 60px 20px;
         }
 
         .loading.active { display: block; }
 
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #e2e8f0;
-            border-top-color: #4361ee;
+            width: 44px;
+            height: 44px;
+            border: 3px solid #334155;
+            border-top-color: #818cf8;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 16px;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto 20px;
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .loading-text {
-            color: #666;
-            font-size: 0.95rem;
-        }
+        .loading-text { color: #94a3b8; font-size: 0.95rem; }
 
-        /* Results */
+        /* Tabs */
         .results { display: none; }
         .results.active { display: block; }
 
-        .brand-section {
-            background: #fff;
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: #1e293b;
             border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
             margin-bottom: 20px;
+            border: 1px solid #334155;
+            overflow-x: auto;
         }
 
-        .brand-name {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #f0f0f0;
+        .tab {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: transparent;
+            color: #94a3b8;
+            transition: all 0.2s;
+            white-space: nowrap;
+            font-family: inherit;
         }
+
+        .tab:hover { color: #e2e8f0; background: rgba(129,140,248,0.1); }
+
+        .tab.active {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+        }
+
+        .tab .event-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            height: 22px;
+            padding: 0 6px;
+            border-radius: 11px;
+            font-size: 0.75rem;
+            margin-left: 6px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .tab:not(.active) .event-count {
+            background: #334155;
+        }
+
+        /* Brand panel */
+        .brand-panel { display: none; }
+        .brand-panel.active { display: block; }
 
         .event-card {
-            padding: 16px;
-            border-left: 4px solid #4361ee;
-            background: #f8fafc;
-            border-radius: 0 8px 8px 0;
-            margin-bottom: 12px;
+            padding: 18px 20px;
+            border-left: 3px solid #818cf8;
+            background: #1e293b;
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 10px;
+            border: 1px solid #334155;
+            border-left: 3px solid #818cf8;
+            transition: border-color 0.2s;
         }
 
-        .event-card:last-child { margin-bottom: 0; }
+        .event-card:hover { border-left-color: #c084fc; }
 
         .event-header {
             display: flex;
@@ -167,116 +246,174 @@
 
         .event-title {
             font-weight: 600;
-            font-size: 1.05rem;
+            font-size: 1rem;
+            color: #f1f5f9;
         }
 
         .event-date {
-            font-size: 0.85rem;
-            color: #666;
+            font-size: 0.8rem;
+            color: #c084fc;
             white-space: nowrap;
-            background: #e2e8f0;
-            padding: 2px 8px;
-            border-radius: 4px;
+            background: rgba(192,132,252,0.1);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: 500;
         }
 
         .event-description {
-            color: #444;
-            font-size: 0.95rem;
-            margin-bottom: 8px;
-            line-height: 1.5;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            line-height: 1.6;
         }
 
         .event-meta {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             flex-wrap: wrap;
         }
 
         .event-category {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             padding: 3px 10px;
-            border-radius: 12px;
+            border-radius: 6px;
         }
 
-        .cat-revenue     { background: #fef3c7; color: #92400e; }
-        .cat-awareness   { background: #dbeafe; color: #1e40af; }
-        .cat-reputation  { background: #fce7f3; color: #9d174d; }
-        .cat-operations  { background: #d1fae5; color: #065f46; }
-        .cat-legal       { background: #fee2e2; color: #991b1b; }
-        .cat-other       { background: #e2e8f0; color: #475569; }
+        .cat-revenue     { background: rgba(251,191,36,0.15); color: #fbbf24; }
+        .cat-awareness   { background: rgba(96,165,250,0.15); color: #60a5fa; }
+        .cat-reputation  { background: rgba(244,114,182,0.15); color: #f472b6; }
+        .cat-operations  { background: rgba(52,211,153,0.15); color: #34d399; }
+        .cat-legal       { background: rgba(248,113,113,0.15); color: #f87171; }
+        .cat-other       { background: rgba(148,163,184,0.15); color: #94a3b8; }
 
         .event-source a {
-            font-size: 0.85rem;
-            color: #4361ee;
+            font-size: 0.82rem;
+            color: #818cf8;
             text-decoration: none;
+            transition: color 0.2s;
         }
 
-        .event-source a:hover { text-decoration: underline; }
+        .event-source a:hover { color: #c084fc; text-decoration: underline; }
 
         /* CSV section */
         .csv-section {
-            background: #fff;
+            background: #1e293b;
+            border: 1px solid #334155;
             border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            padding: 20px 24px;
             margin-bottom: 20px;
         }
 
-        .csv-section h3 { margin-bottom: 16px; }
+        .csv-section h3 {
+            font-size: 0.95rem;
+            margin-bottom: 14px;
+            color: #cbd5e1;
+        }
 
-        .date-inputs {
+        .csv-row {
             display: flex;
-            gap: 16px;
+            gap: 12px;
             flex-wrap: wrap;
             align-items: end;
         }
 
-        .date-inputs .field {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+        .csv-section input[type="date"] {
+            padding: 9px 12px;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: inherit;
         }
 
-        .date-inputs input, .date-inputs select {
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+        .csv-section select {
+            padding: 9px 12px;
+        }
+
+        .no-events {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
             font-size: 0.95rem;
         }
 
         .error {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 16px;
-            border-radius: 8px;
+            background: rgba(248,113,113,0.1);
+            border: 1px solid rgba(248,113,113,0.3);
+            color: #f87171;
+            padding: 14px 18px;
+            border-radius: 10px;
             margin-bottom: 16px;
             display: none;
+            font-size: 0.9rem;
         }
 
         .error.active { display: block; }
+
+        .events-summary {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .summary-stat {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 14px 20px;
+            flex: 1;
+            min-width: 140px;
+            text-align: center;
+        }
+
+        .summary-stat .num {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #818cf8;
+        }
+
+        .summary-stat .label {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Brand Events Finder</h1>
-        <p class="subtitle">Поиск событий, влияющих на бизнес-метрики брендов</p>
+        <div class="header">
+            <h1>Brand Events Finder</h1>
+            <p class="subtitle">Поиск событий, влияющих на бизнес-метрики брендов</p>
+        </div>
 
         <div class="input-section">
             <label for="brands">Бренды</label>
-            <p class="hint">Введите названия через запятую: Сбер, Альфастрахование, Добрый, Exeed</p>
+            <p class="hint">Введите названия через запятую, например: Сбер, Альфастрахование, Добрый, Exeed</p>
             <textarea id="brands" placeholder="Сбер, Альфастрахование, Добрый"></textarea>
-            <button class="btn btn-primary" id="searchBtn" onclick="startSearch()">Найти события</button>
+            <div class="controls-row">
+                <div class="field">
+                    <label>Год с</label>
+                    <select id="yearFrom"></select>
+                </div>
+                <div class="field">
+                    <label>Год по</label>
+                    <select id="yearTo"></select>
+                </div>
+                <button class="btn btn-primary" id="searchBtn" onclick="startSearch()">Найти события</button>
+            </div>
         </div>
 
         <div class="error" id="error"></div>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p class="loading-text">Ищем события по брендам... Это может занять 1-2 минуты.</p>
+            <p class="loading-text">Ищем события по брендам... Это может занять 1-2 минуты</p>
         </div>
 
         <div class="results" id="results"></div>
@@ -284,14 +421,28 @@
 
     <script>
         let lastResults = null;
+        let activeTab = 0;
+
+        (function initYears() {
+            const cur = new Date().getFullYear();
+            const from = document.getElementById('yearFrom');
+            const to = document.getElementById('yearTo');
+            for (let y = cur; y >= 2015; y--) {
+                from.add(new Option(y, y));
+                to.add(new Option(y, y));
+            }
+            from.value = cur - 3;
+            to.value = cur;
+        })();
 
         async function startSearch() {
             const input = document.getElementById('brands').value.trim();
             if (!input) return;
-
             const brands = input.split(',').map(b => b.trim()).filter(Boolean);
-            if (brands.length === 0) return;
+            if (!brands.length) return;
 
+            const yearFrom = +document.getElementById('yearFrom').value;
+            const yearTo = +document.getElementById('yearTo').value;
             const btn = document.getElementById('searchBtn');
             const loading = document.getElementById('loading');
             const results = document.getElementById('results');
@@ -307,19 +458,15 @@
                 const resp = await fetch('/api/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ brands }),
+                    body: JSON.stringify({ brands, year_from: yearFrom, year_to: yearTo }),
                 });
-
-                if (!resp.ok) {
-                    const err = await resp.text();
-                    throw new Error(err);
-                }
-
+                if (!resp.ok) throw new Error(await resp.text());
                 const data = await resp.json();
                 lastResults = data.results;
+                activeTab = 0;
                 renderResults(data.results);
             } catch (e) {
-                error.textContent = 'Ошибка: ' + e.message;
+                error.textContent = e.message;
                 error.classList.add('active');
             } finally {
                 btn.disabled = false;
@@ -327,23 +474,40 @@
             }
         }
 
+        function switchTab(idx) {
+            activeTab = idx;
+            document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+            document.querySelectorAll('.brand-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
+        }
+
         function renderResults(brandResults) {
             const container = document.getElementById('results');
             container.innerHTML = '';
 
-            // CSV export section
-            const csvSection = document.createElement('div');
-            csvSection.className = 'csv-section';
-            csvSection.innerHTML = `
+            const totalEvents = brandResults.reduce((s, b) => s + b.events.length, 0);
+
+            // Summary stats
+            const summary = document.createElement('div');
+            summary.className = 'events-summary';
+            summary.innerHTML = `
+                <div class="summary-stat"><div class="num">${brandResults.length}</div><div class="label">${brandResults.length === 1 ? 'бренд' : 'брендов'}</div></div>
+                <div class="summary-stat"><div class="num">${totalEvents}</div><div class="label">событий найдено</div></div>
+            `;
+            container.appendChild(summary);
+
+            // CSV export
+            const csv = document.createElement('div');
+            csv.className = 'csv-section';
+            csv.innerHTML = `
                 <h3>Экспорт в CSV (dummy-переменные)</h3>
-                <div class="date-inputs">
+                <div class="csv-row">
                     <div class="field">
                         <label>Начало</label>
-                        <input type="date" id="csvStart" value="2022-01-01">
+                        <input type="date" id="csvStart" value="${document.getElementById('yearFrom').value}-01-01">
                     </div>
                     <div class="field">
                         <label>Конец</label>
-                        <input type="date" id="csvEnd" value="2025-12-31">
+                        <input type="date" id="csvEnd" value="${document.getElementById('yearTo').value}-12-31">
                     </div>
                     <div class="field">
                         <label>Частота</label>
@@ -356,25 +520,38 @@
                     <button class="btn btn-csv" onclick="downloadCsv()">Скачать CSV</button>
                 </div>
             `;
-            container.appendChild(csvSection);
+            container.appendChild(csv);
 
+            // Tabs
+            if (brandResults.length > 1) {
+                const tabs = document.createElement('div');
+                tabs.className = 'tabs';
+                brandResults.forEach((br, i) => {
+                    const t = document.createElement('button');
+                    t.className = 'tab' + (i === 0 ? ' active' : '');
+                    t.innerHTML = `${esc(br.brand)}<span class="event-count">${br.events.length}</span>`;
+                    t.onclick = () => switchTab(i);
+                    tabs.appendChild(t);
+                });
+                container.appendChild(tabs);
+            }
+
+            // Panels
             const catLabels = {
-                revenue: 'Выручка',
-                awareness: 'Узнаваемость',
-                reputation: 'Репутация',
-                operations: 'Операции',
-                legal: 'Юридическое',
+                revenue: 'Выручка', awareness: 'Узнаваемость',
+                reputation: 'Репутация', operations: 'Операции', legal: 'Юридическое',
             };
 
-            for (const br of brandResults) {
-                const section = document.createElement('div');
-                section.className = 'brand-section';
+            brandResults.forEach((br, i) => {
+                const panel = document.createElement('div');
+                panel.className = 'brand-panel' + (i === 0 ? ' active' : '');
 
-                let eventsHtml = '';
-                for (const ev of br.events) {
-                    const cat = ev.impact_category || 'other';
-                    const catLabel = catLabels[cat] || cat;
-                    eventsHtml += `
+                if (!br.events.length) {
+                    panel.innerHTML = '<div class="no-events">Событий не найдено</div>';
+                } else {
+                    panel.innerHTML = br.events.map(ev => {
+                        const cat = ev.impact_category || 'other';
+                        return `
                         <div class="event-card">
                             <div class="event-header">
                                 <span class="event-title">${esc(ev.event_name)}</span>
@@ -382,46 +559,34 @@
                             </div>
                             <p class="event-description">${esc(ev.description)}</p>
                             <div class="event-meta">
-                                <span class="event-category cat-${cat}">${esc(catLabel)}</span>
+                                <span class="event-category cat-${cat}">${esc(catLabels[cat] || cat)}</span>
                                 <span class="event-source">
                                     <a href="${esc(ev.source_url)}" target="_blank" rel="noopener">${esc(ev.source_title || 'Источник')}</a>
                                 </span>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
+                    }).join('');
                 }
-
-                section.innerHTML = `
-                    <div class="brand-name">${esc(br.brand)}</div>
-                    ${br.events.length === 0 ? '<p style="color:#888">Событий не найдено</p>' : eventsHtml}
-                `;
-                container.appendChild(section);
-            }
+                container.appendChild(panel);
+            });
 
             container.classList.add('active');
         }
 
         async function downloadCsv() {
             if (!lastResults) return;
-
-            const startDate = document.getElementById('csvStart').value;
-            const endDate = document.getElementById('csvEnd').value;
-            const freq = document.getElementById('csvFreq').value;
-
             try {
                 const resp = await fetch('/api/csv', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         results: lastResults,
-                        start_date: startDate,
-                        end_date: endDate,
-                        freq: freq,
+                        start_date: document.getElementById('csvStart').value,
+                        end_date: document.getElementById('csvEnd').value,
+                        freq: document.getElementById('csvFreq').value,
                     }),
                 });
-
                 if (!resp.ok) throw new Error(await resp.text());
-
                 const blob = await resp.blob();
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -430,13 +595,13 @@
                 a.click();
                 URL.revokeObjectURL(url);
             } catch (e) {
-                alert('Ошибка при скачивании CSV: ' + e.message);
+                alert(e.message);
             }
         }
 
-        function esc(str) {
+        function esc(s) {
             const d = document.createElement('div');
-            d.textContent = str || '';
+            d.textContent = s || '';
             return d.innerHTML;
         }
     </script>

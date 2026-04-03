@@ -3,3 +3,10 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+*.log
+.DS_Store
+.pytest_cache/
+.coverage
+dist/
+build/
+*.egg-info/

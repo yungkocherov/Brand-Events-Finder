@@ -1,14 +1,15 @@
 import asyncio
-import io
 import csv
+import io
+import re
 from datetime import date, timedelta
 
 from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, Response
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.models import BrandRequest, SearchResponse, CsvRequest
 from app.services.event_search import search_brand_events
@@ -23,7 +24,10 @@ async def index():
 
 @app.post("/api/search", response_model=SearchResponse)
 async def search_events(request: BrandRequest):
-    tasks = [search_brand_events(brand) for brand in request.brands]
+    tasks = [
+        search_brand_events(brand, request.year_from, request.year_to)
+        for brand in request.brands
+    ]
     results = await asyncio.gather(*tasks)
     return SearchResponse(results=results)
 
@@ -33,7 +37,6 @@ async def export_csv(request: CsvRequest):
     start = request.start_date
     end = request.end_date
 
-    # Build date range
     dates: list[date] = []
     current = start
     while current <= end:
@@ -41,7 +44,6 @@ async def export_csv(request: CsvRequest):
         if request.freq == "W":
             current += timedelta(weeks=1)
         elif request.freq == "M":
-            # Approximate month step
             month = current.month + 1
             year = current.year
             if month > 12:
@@ -54,7 +56,6 @@ async def export_csv(request: CsvRequest):
         else:
             current += timedelta(days=1)
 
-    # Collect all events with parseable dates
     all_events: list[tuple[str, str, date | None]] = []
     for brand_result in request.results:
         for ev in brand_result.events:
@@ -62,7 +63,6 @@ async def export_csv(request: CsvRequest):
             col_name = f"{ev.brand} | {ev.event_name}"
             all_events.append((col_name, ev.event_date, event_date))
 
-    # Build CSV
     output = io.StringIO()
     writer = csv.writer(output)
 
@@ -87,26 +87,20 @@ async def export_csv(request: CsvRequest):
 
 
 def _parse_date(date_str: str) -> date | None:
-    """Try to parse various date formats."""
-    import re
-
-    # Try ISO format first: YYYY-MM-DD
+    """Parse date string in various formats: YYYY-MM-DD, DD.MM.YYYY, YYYY-MM, YYYY."""
     try:
         return date.fromisoformat(date_str)
     except (ValueError, TypeError):
         pass
 
-    # Try DD.MM.YYYY
     m = re.match(r"(\d{1,2})\.(\d{1,2})\.(\d{4})", date_str)
     if m:
         return date(int(m.group(3)), int(m.group(2)), int(m.group(1)))
 
-    # Try extracting just year-month: YYYY-MM
     m = re.match(r"(\d{4})-(\d{1,2})", date_str)
     if m:
         return date(int(m.group(1)), int(m.group(2)), 1)
 
-    # Try just year
     m = re.match(r"(\d{4})", date_str)
     if m:
         return date(int(m.group(1)), 1, 1)
