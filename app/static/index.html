@@ -11,8 +11,8 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
+            background: #f8fafc;
+            color: #1e293b;
             min-height: 100vh;
         }
 
@@ -22,32 +22,48 @@
             padding: 48px 24px;
         }
 
+        /* Header */
         .header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 36px;
         }
 
         .header h1 {
             font-size: 2.2rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #818cf8, #c084fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #4338ca;
             margin-bottom: 8px;
         }
 
         .header .subtitle {
-            color: #94a3b8;
+            color: #64748b;
             font-size: 1.05rem;
         }
 
+        /* About */
+        .about {
+            background: linear-gradient(135deg, #eef2ff, #faf5ff);
+            border: 1px solid #e0e7ff;
+            border-radius: 14px;
+            padding: 22px 28px;
+            margin-bottom: 28px;
+            line-height: 1.7;
+            color: #475569;
+            font-size: 0.92rem;
+        }
+
+        .about strong { color: #4338ca; }
+
+        .about p + p { margin-top: 8px; }
+
         /* Input section */
         .input-section {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 16px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
             padding: 28px;
             margin-bottom: 28px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
 
         label {
@@ -55,33 +71,33 @@
             font-weight: 600;
             margin-bottom: 6px;
             font-size: 0.9rem;
-            color: #cbd5e1;
+            color: #334155;
         }
 
         .hint {
             font-size: 0.82rem;
-            color: #64748b;
+            color: #94a3b8;
             margin-bottom: 10px;
         }
 
         textarea {
             width: 100%;
             padding: 12px 14px;
-            border: 1px solid #334155;
+            border: 1px solid #cbd5e1;
             border-radius: 10px;
             font-size: 1rem;
             resize: none;
             min-height: 52px;
             font-family: inherit;
-            background: #0f172a;
-            color: #e2e8f0;
+            background: #fff;
+            color: #1e293b;
             transition: border-color 0.2s;
         }
 
         textarea:focus {
             outline: none;
             border-color: #818cf8;
-            box-shadow: 0 0 0 3px rgba(129,140,248,0.15);
+            box-shadow: 0 0 0 3px rgba(129,140,248,0.12);
         }
 
         .controls-row {
@@ -100,11 +116,11 @@
 
         select, .csv-section input[type="date"] {
             padding: 10px 12px;
-            border: 1px solid #334155;
+            border: 1px solid #cbd5e1;
             border-radius: 10px;
             font-size: 0.9rem;
-            background: #0f172a;
-            color: #e2e8f0;
+            background: #fff;
+            color: #1e293b;
             font-family: inherit;
         }
 
@@ -129,19 +145,19 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            background: #4f46e5;
             color: #fff;
         }
 
-        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .btn-primary:hover { background: #4338ca; transform: translateY(-1px); }
+        .btn-primary:disabled { background: #a5b4fc; cursor: not-allowed; transform: none; }
 
         .btn-csv {
-            background: linear-gradient(135deg, #059669, #10b981);
+            background: #059669;
             color: #fff;
         }
 
-        .btn-csv:hover { opacity: 0.9; }
+        .btn-csv:hover { background: #047857; }
 
         /* Loading */
         .loading {
@@ -155,8 +171,8 @@
         .spinner {
             width: 44px;
             height: 44px;
-            border: 3px solid #334155;
-            border-top-color: #818cf8;
+            border: 3px solid #e2e8f0;
+            border-top-color: #4f46e5;
             border-radius: 50%;
             animation: spin 0.7s linear infinite;
             margin: 0 auto 20px;
@@ -164,21 +180,54 @@
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .loading-text { color: #94a3b8; font-size: 0.95rem; }
+        .loading-text { color: #64748b; font-size: 0.95rem; }
 
-        /* Tabs */
+        /* Results */
         .results { display: none; }
         .results.active { display: block; }
 
+        /* Summary */
+        .events-summary {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .summary-stat {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px 24px;
+            flex: 1;
+            min-width: 140px;
+            text-align: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+
+        .summary-stat .num {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #4f46e5;
+        }
+
+        .summary-stat .label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        /* Tabs */
         .tabs {
             display: flex;
             gap: 4px;
             padding: 4px;
-            background: #1e293b;
+            background: #fff;
             border-radius: 12px;
-            margin-bottom: 20px;
-            border: 1px solid #334155;
+            margin-bottom: 18px;
+            border: 1px solid #e2e8f0;
             overflow-x: auto;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
         }
 
         .tab {
@@ -189,16 +238,16 @@
             font-weight: 600;
             cursor: pointer;
             background: transparent;
-            color: #94a3b8;
+            color: #64748b;
             transition: all 0.2s;
             white-space: nowrap;
             font-family: inherit;
         }
 
-        .tab:hover { color: #e2e8f0; background: rgba(129,140,248,0.1); }
+        .tab:hover { color: #1e293b; background: #f1f5f9; }
 
         .tab.active {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            background: #4f46e5;
             color: #fff;
         }
 
@@ -212,11 +261,12 @@
             border-radius: 11px;
             font-size: 0.75rem;
             margin-left: 6px;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.3);
         }
 
         .tab:not(.active) .event-count {
-            background: #334155;
+            background: #e2e8f0;
+            color: #475569;
         }
 
         /* Brand panel */
@@ -225,16 +275,19 @@
 
         .event-card {
             padding: 18px 20px;
-            border-left: 3px solid #818cf8;
-            background: #1e293b;
-            border-radius: 0 12px 12px 0;
+            background: #fff;
+            border-radius: 10px;
             margin-bottom: 10px;
-            border: 1px solid #334155;
+            border: 1px solid #e2e8f0;
             border-left: 3px solid #818cf8;
-            transition: border-color 0.2s;
+            transition: box-shadow 0.2s, border-left-color 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
         }
 
-        .event-card:hover { border-left-color: #c084fc; }
+        .event-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border-left-color: #4f46e5;
+        }
 
         .event-header {
             display: flex;
@@ -247,21 +300,21 @@
         .event-title {
             font-weight: 600;
             font-size: 1rem;
-            color: #f1f5f9;
+            color: #1e293b;
         }
 
         .event-date {
             font-size: 0.8rem;
-            color: #c084fc;
+            color: #6d28d9;
             white-space: nowrap;
-            background: rgba(192,132,252,0.1);
+            background: #ede9fe;
             padding: 3px 10px;
             border-radius: 6px;
             font-weight: 500;
         }
 
         .event-description {
-            color: #94a3b8;
+            color: #64748b;
             font-size: 0.9rem;
             margin-bottom: 10px;
             line-height: 1.6;
@@ -283,35 +336,36 @@
             border-radius: 6px;
         }
 
-        .cat-revenue     { background: rgba(251,191,36,0.15); color: #fbbf24; }
-        .cat-awareness   { background: rgba(96,165,250,0.15); color: #60a5fa; }
-        .cat-reputation  { background: rgba(244,114,182,0.15); color: #f472b6; }
-        .cat-operations  { background: rgba(52,211,153,0.15); color: #34d399; }
-        .cat-legal       { background: rgba(248,113,113,0.15); color: #f87171; }
-        .cat-other       { background: rgba(148,163,184,0.15); color: #94a3b8; }
+        .cat-revenue     { background: #fef3c7; color: #92400e; }
+        .cat-awareness   { background: #dbeafe; color: #1e40af; }
+        .cat-reputation  { background: #fce7f3; color: #9d174d; }
+        .cat-operations  { background: #d1fae5; color: #065f46; }
+        .cat-legal       { background: #fee2e2; color: #991b1b; }
+        .cat-other       { background: #f1f5f9; color: #475569; }
 
         .event-source a {
             font-size: 0.82rem;
-            color: #818cf8;
+            color: #4f46e5;
             text-decoration: none;
             transition: color 0.2s;
         }
 
-        .event-source a:hover { color: #c084fc; text-decoration: underline; }
+        .event-source a:hover { color: #6d28d9; text-decoration: underline; }
 
         /* CSV section */
         .csv-section {
-            background: #1e293b;
-            border: 1px solid #334155;
+            background: #fff;
+            border: 1px solid #e2e8f0;
             border-radius: 12px;
             padding: 20px 24px;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
         }
 
         .csv-section h3 {
             font-size: 0.95rem;
             margin-bottom: 14px;
-            color: #cbd5e1;
+            color: #334155;
         }
 
         .csv-row {
@@ -323,29 +377,27 @@
 
         .csv-section input[type="date"] {
             padding: 9px 12px;
-            border: 1px solid #334155;
+            border: 1px solid #cbd5e1;
             border-radius: 10px;
             font-size: 0.85rem;
-            background: #0f172a;
-            color: #e2e8f0;
+            background: #fff;
+            color: #1e293b;
             font-family: inherit;
         }
 
-        .csv-section select {
-            padding: 9px 12px;
-        }
+        .csv-section select { padding: 9px 12px; }
 
         .no-events {
             text-align: center;
             padding: 40px;
-            color: #64748b;
+            color: #94a3b8;
             font-size: 0.95rem;
         }
 
         .error {
-            background: rgba(248,113,113,0.1);
-            border: 1px solid rgba(248,113,113,0.3);
-            color: #f87171;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
             padding: 14px 18px;
             border-radius: 10px;
             margin-bottom: 16px;
@@ -354,35 +406,6 @@
         }
 
         .error.active { display: block; }
-
-        .events-summary {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
-
-        .summary-stat {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 10px;
-            padding: 14px 20px;
-            flex: 1;
-            min-width: 140px;
-            text-align: center;
-        }
-
-        .summary-stat .num {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #818cf8;
-        }
-
-        .summary-stat .label {
-            font-size: 0.8rem;
-            color: #64748b;
-            margin-top: 2px;
-        }
     </style>
 </head>
 <body>
@@ -390,6 +413,20 @@
         <div class="header">
             <h1>Brand Events Finder</h1>
             <p class="subtitle">Поиск событий, влияющих на бизнес-метрики брендов</p>
+        </div>
+
+        <div class="about">
+            <p>
+                <strong>Как это работает:</strong> вы вводите названия брендов и выбираете временной диапазон.
+                Сервис автоматически ищет в новостных источниках (РБК, Коммерсантъ, Forbes, ТАСС, Ведомости и др.)
+                события, которые могли повлиять на бизнес-метрики компании: выручку, узнаваемость, репутацию.
+            </p>
+            <p>
+                Среди таких событий: ребрендинг, судебные разбирательства, санкции, запуск новых продуктов,
+                смена руководства, крупные сделки и партнёрства. AI-агент анализирует найденные статьи
+                и формирует структурированный список. Результаты можно выгрузить в CSV с dummy-переменными
+                (0 до события, 1 после) для использования в моделях.
+            </p>
         </div>
 
         <div class="input-section">
@@ -486,7 +523,7 @@
 
             const totalEvents = brandResults.reduce((s, b) => s + b.events.length, 0);
 
-            // Summary stats
+            // Summary
             const summary = document.createElement('div');
             summary.className = 'events-summary';
             summary.innerHTML = `
