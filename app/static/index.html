@@ -8,404 +8,258 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1040px;
-            margin: 0 auto;
-            padding: 48px 24px;
-        }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; }
+        .container { max-width: 1080px; margin: 0 auto; padding: 40px 24px; }
 
         /* Header */
-        .header {
-            text-align: center;
-            margin-bottom: 36px;
-        }
-
-        .header h1 {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #4338ca;
-            margin-bottom: 8px;
-        }
-
-        .header .subtitle {
-            color: #64748b;
-            font-size: 1.05rem;
-        }
+        .header { text-align: center; margin-bottom: 32px; }
+        .header h1 { font-size: 2.1rem; font-weight: 700; color: #4338ca; margin-bottom: 6px; }
+        .header .subtitle { color: #64748b; font-size: 1rem; }
 
         /* About */
         .about {
             background: linear-gradient(135deg, #eef2ff, #faf5ff);
-            border: 1px solid #e0e7ff;
-            border-radius: 14px;
-            padding: 22px 28px;
-            margin-bottom: 28px;
-            line-height: 1.7;
-            color: #475569;
-            font-size: 0.92rem;
+            border: 1px solid #e0e7ff; border-radius: 14px;
+            padding: 20px 26px; margin-bottom: 24px;
+            line-height: 1.65; color: #475569; font-size: 0.9rem;
         }
-
         .about strong { color: #4338ca; }
+        .about p + p { margin-top: 6px; }
 
-        .about p + p { margin-top: 8px; }
-
-        /* Input section */
+        /* Input */
         .input-section {
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 14px;
-            padding: 28px;
-            margin-bottom: 28px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+            padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
-
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 6px;
-            font-size: 0.9rem;
-            color: #334155;
-        }
-
-        .hint {
-            font-size: 0.82rem;
-            color: #94a3b8;
-            margin-bottom: 10px;
-        }
-
+        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.88rem; color: #334155; }
+        .hint { font-size: 0.8rem; color: #94a3b8; margin-bottom: 8px; }
         textarea {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 10px;
-            font-size: 1rem;
-            resize: none;
-            min-height: 52px;
-            font-family: inherit;
-            background: #fff;
-            color: #1e293b;
-            transition: border-color 0.2s;
+            width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px;
+            font-size: 0.95rem; resize: none; min-height: 48px; font-family: inherit;
+            background: #fff; color: #1e293b;
         }
+        textarea:focus { outline: none; border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
 
-        textarea:focus {
-            outline: none;
-            border-color: #818cf8;
-            box-shadow: 0 0 0 3px rgba(129,140,248,0.12);
+        .controls-row { display: flex; gap: 14px; align-items: end; flex-wrap: wrap; margin-top: 14px; }
+        .field { display: flex; flex-direction: column; gap: 3px; }
+        select, input[type="date"] {
+            padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 10px;
+            font-size: 0.88rem; background: #fff; color: #1e293b; font-family: inherit;
         }
-
-        .controls-row {
-            display: flex;
-            gap: 16px;
-            align-items: end;
-            flex-wrap: wrap;
-            margin-top: 16px;
-        }
-
-        .field {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        select, .csv-section input[type="date"] {
-            padding: 10px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            background: #fff;
-            color: #1e293b;
-            font-family: inherit;
-        }
-
-        select:focus, input:focus {
-            outline: none;
-            border-color: #818cf8;
-        }
+        select:focus, input:focus { outline: none; border-color: #818cf8; }
 
         .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 11px 28px;
-            border: none;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 10px 24px; border: none; border-radius: 10px; font-size: 0.9rem;
+            font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit;
         }
-
-        .btn-primary {
-            background: #4f46e5;
-            color: #fff;
-        }
-
-        .btn-primary:hover { background: #4338ca; transform: translateY(-1px); }
-        .btn-primary:disabled { background: #a5b4fc; cursor: not-allowed; transform: none; }
-
-        .btn-csv {
-            background: #059669;
-            color: #fff;
-        }
-
+        .btn-primary { background: #4f46e5; color: #fff; }
+        .btn-primary:hover { background: #4338ca; }
+        .btn-primary:disabled { background: #a5b4fc; cursor: not-allowed; }
+        .btn-csv { background: #059669; color: #fff; }
         .btn-csv:hover { background: #047857; }
+        .btn-sm { padding: 6px 14px; font-size: 0.82rem; }
+        .btn-outline { background: #fff; color: #4f46e5; border: 1px solid #c7d2fe; }
+        .btn-outline:hover { background: #eef2ff; }
+        .btn-danger { background: #fff; color: #dc2626; border: 1px solid #fecaca; }
+        .btn-danger:hover { background: #fef2f2; }
 
         /* Loading */
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 60px 20px;
-        }
-
+        .loading { display: none; text-align: center; padding: 50px 20px; }
         .loading.active { display: block; }
-
         .spinner {
-            width: 44px;
-            height: 44px;
-            border: 3px solid #e2e8f0;
-            border-top-color: #4f46e5;
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-            margin: 0 auto 20px;
+            width: 40px; height: 40px; border: 3px solid #e2e8f0;
+            border-top-color: #4f46e5; border-radius: 50%;
+            animation: spin 0.7s linear infinite; margin: 0 auto 16px;
         }
-
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        .loading-text { color: #64748b; font-size: 0.95rem; }
+        .loading-text { color: #64748b; font-size: 0.9rem; }
 
         /* Results */
         .results { display: none; }
         .results.active { display: block; }
 
         /* Summary */
-        .events-summary {
-            display: flex;
-            gap: 14px;
-            margin-bottom: 18px;
-            flex-wrap: wrap;
-        }
-
+        .events-summary { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
         .summary-stat {
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 16px 24px;
-            flex: 1;
-            min-width: 140px;
-            text-align: center;
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+            padding: 14px 20px; flex: 1; min-width: 120px; text-align: center;
             box-shadow: 0 1px 2px rgba(0,0,0,0.03);
         }
+        .summary-stat .num { font-size: 1.5rem; font-weight: 700; color: #4f46e5; }
+        .summary-stat .label { font-size: 0.78rem; color: #94a3b8; margin-top: 2px; }
 
-        .summary-stat .num {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #4f46e5;
+        /* Timeline */
+        .timeline-section {
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+            padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
         }
-
-        .summary-stat .label {
-            font-size: 0.8rem;
-            color: #94a3b8;
-            margin-top: 2px;
+        .timeline-section h3 { font-size: 0.9rem; color: #334155; margin-bottom: 12px; }
+        .timeline {
+            position: relative; display: flex; align-items: flex-start;
+            overflow-x: auto; padding: 8px 0 16px; gap: 0;
         }
+        .timeline-bar {
+            position: absolute; top: 24px; left: 0; right: 0;
+            height: 3px; background: #e2e8f0; border-radius: 2px;
+        }
+        .timeline-event {
+            position: relative; flex: 0 0 auto; width: 14px; height: 14px;
+            border-radius: 50%; cursor: pointer; z-index: 1;
+            margin-top: 18px; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .timeline-event:hover { transform: scale(1.5); }
+        .timeline-event.positive { background: #22c55e; }
+        .timeline-event.negative { background: #ef4444; }
+        .timeline-event.neutral { background: #94a3b8; }
+        .timeline-labels {
+            display: flex; justify-content: space-between;
+            font-size: 0.75rem; color: #94a3b8; margin-top: 8px;
+        }
+        .timeline-tooltip {
+            display: none; position: fixed; background: #1e293b; color: #f1f5f9;
+            padding: 8px 12px; border-radius: 8px; font-size: 0.82rem;
+            max-width: 280px; z-index: 100; pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .timeline-tooltip.visible { display: block; }
 
         /* Tabs */
         .tabs {
-            display: flex;
-            gap: 4px;
-            padding: 4px;
-            background: #fff;
-            border-radius: 12px;
-            margin-bottom: 18px;
-            border: 1px solid #e2e8f0;
-            overflow-x: auto;
+            display: flex; gap: 4px; padding: 4px; background: #fff;
+            border-radius: 12px; margin-bottom: 14px; border: 1px solid #e2e8f0;
+            overflow-x: auto; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+        .tab {
+            padding: 9px 18px; border: none; border-radius: 8px; font-size: 0.88rem;
+            font-weight: 600; cursor: pointer; background: transparent; color: #64748b;
+            transition: all 0.2s; white-space: nowrap; font-family: inherit;
+        }
+        .tab:hover { color: #1e293b; background: #f1f5f9; }
+        .tab.active { background: #4f46e5; color: #fff; }
+        .tab .event-count {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px;
+            font-size: 0.72rem; margin-left: 5px; background: rgba(255,255,255,0.3);
+        }
+        .tab:not(.active) .event-count { background: #e2e8f0; color: #475569; }
+
+        /* Filters & Sort bar */
+        .toolbar {
+            display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+            margin-bottom: 12px; padding: 10px 14px;
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.03);
         }
-
-        .tab {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            background: transparent;
-            color: #64748b;
-            transition: all 0.2s;
-            white-space: nowrap;
-            font-family: inherit;
+        .toolbar label { margin: 0; font-size: 0.82rem; color: #64748b; font-weight: 500; }
+        .toolbar select { padding: 6px 8px; font-size: 0.82rem; }
+        .filter-group { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px; border-radius: 6px; font-size: 0.75rem;
+            font-weight: 600; cursor: pointer; border: 1px solid transparent;
+            transition: opacity 0.2s; user-select: none;
         }
-
-        .tab:hover { color: #1e293b; background: #f1f5f9; }
-
-        .tab.active {
-            background: #4f46e5;
-            color: #fff;
-        }
-
-        .tab .event-count {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 22px;
-            height: 22px;
-            padding: 0 6px;
-            border-radius: 11px;
-            font-size: 0.75rem;
-            margin-left: 6px;
-            background: rgba(255,255,255,0.3);
-        }
-
-        .tab:not(.active) .event-count {
-            background: #e2e8f0;
-            color: #475569;
-        }
+        .chip.off { opacity: 0.35; }
+        .chip input { display: none; }
+        .chip-positive { background: #dcfce7; color: #166534; }
+        .chip-negative { background: #fee2e2; color: #991b1b; }
+        .chip-neutral  { background: #f1f5f9; color: #475569; }
+        .chip-revenue     { background: #fef3c7; color: #92400e; }
+        .chip-awareness   { background: #dbeafe; color: #1e40af; }
+        .chip-reputation  { background: #fce7f3; color: #9d174d; }
+        .chip-operations  { background: #d1fae5; color: #065f46; }
+        .chip-legal       { background: #fee2e2; color: #991b1b; }
 
         /* Brand panel */
         .brand-panel { display: none; }
         .brand-panel.active { display: block; }
 
+        /* Event card */
         .event-card {
-            padding: 18px 20px;
-            background: #fff;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #e2e8f0;
-            border-left: 3px solid #818cf8;
+            display: flex; gap: 12px; align-items: flex-start;
+            padding: 14px 16px; background: #fff; border-radius: 10px;
+            margin-bottom: 8px; border: 1px solid #e2e8f0; border-left: 3px solid #818cf8;
             transition: box-shadow 0.2s, border-left-color 0.2s;
             box-shadow: 0 1px 2px rgba(0,0,0,0.03);
         }
-
-        .event-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-            border-left-color: #4f46e5;
-        }
-
-        .event-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 12px;
-            margin-bottom: 8px;
-        }
-
-        .event-title {
-            font-weight: 600;
-            font-size: 1rem;
-            color: #1e293b;
-        }
-
+        .event-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); border-left-color: #4f46e5; }
+        .event-card.excluded { opacity: 0.4; }
+        .event-card.sentiment-positive { border-left-color: #22c55e; }
+        .event-card.sentiment-negative { border-left-color: #ef4444; }
+        .event-card.sentiment-neutral  { border-left-color: #94a3b8; }
+        .event-checkbox { margin-top: 3px; width: 16px; height: 16px; accent-color: #4f46e5; cursor: pointer; }
+        .event-body { flex: 1; min-width: 0; }
+        .event-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
+        .event-title { font-weight: 600; font-size: 0.95rem; color: #1e293b; }
         .event-date {
-            font-size: 0.8rem;
-            color: #6d28d9;
-            white-space: nowrap;
-            background: #ede9fe;
-            padding: 3px 10px;
-            border-radius: 6px;
-            font-weight: 500;
+            font-size: 0.78rem; color: #6d28d9; white-space: nowrap;
+            background: #ede9fe; padding: 2px 8px; border-radius: 5px; font-weight: 500;
         }
-
-        .event-description {
-            color: #64748b;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-            line-height: 1.6;
+        .event-description { color: #64748b; font-size: 0.85rem; margin-bottom: 8px; line-height: 1.55; }
+        .event-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .event-badge {
+            font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.4px; padding: 2px 8px; border-radius: 5px;
         }
-
-        .event-meta {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .event-category {
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 3px 10px;
-            border-radius: 6px;
-        }
-
         .cat-revenue     { background: #fef3c7; color: #92400e; }
         .cat-awareness   { background: #dbeafe; color: #1e40af; }
         .cat-reputation  { background: #fce7f3; color: #9d174d; }
         .cat-operations  { background: #d1fae5; color: #065f46; }
         .cat-legal       { background: #fee2e2; color: #991b1b; }
         .cat-other       { background: #f1f5f9; color: #475569; }
-
-        .event-source a {
-            font-size: 0.82rem;
-            color: #4f46e5;
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
+        .sent-positive   { background: #dcfce7; color: #166534; }
+        .sent-negative   { background: #fee2e2; color: #991b1b; }
+        .sent-neutral    { background: #f1f5f9; color: #64748b; }
+        .event-source a { font-size: 0.8rem; color: #4f46e5; text-decoration: none; }
         .event-source a:hover { color: #6d28d9; text-decoration: underline; }
 
         /* CSV section */
         .csv-section {
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 20px 24px;
-            margin-bottom: 18px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+            padding: 18px 22px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
         }
+        .csv-section h3 { font-size: 0.9rem; margin-bottom: 12px; color: #334155; }
+        .csv-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
 
-        .csv-section h3 {
-            font-size: 0.95rem;
-            margin-bottom: 14px;
-            color: #334155;
+        /* CSV preview */
+        .csv-preview {
+            margin-top: 14px; max-height: 300px; overflow: auto;
+            border: 1px solid #e2e8f0; border-radius: 8px;
         }
-
-        .csv-row {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            align-items: end;
+        .csv-preview table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+        .csv-preview th {
+            position: sticky; top: 0; background: #f1f5f9; color: #475569;
+            padding: 6px 10px; text-align: left; font-weight: 600; border-bottom: 1px solid #e2e8f0;
         }
+        .csv-preview td { padding: 5px 10px; border-bottom: 1px solid #f1f5f9; color: #64748b; }
+        .csv-preview tr:hover td { background: #f8fafc; }
 
-        .csv-section input[type="date"] {
-            padding: 9px 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            background: #fff;
-            color: #1e293b;
-            font-family: inherit;
+        /* History */
+        .history-section {
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+            padding: 18px 22px; margin-bottom: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
         }
-
-        .csv-section select { padding: 9px 12px; }
-
-        .no-events {
-            text-align: center;
-            padding: 40px;
-            color: #94a3b8;
-            font-size: 0.95rem;
+        .history-section h3 { font-size: 0.9rem; color: #334155; margin-bottom: 10px; }
+        .history-list { display: flex; gap: 8px; flex-wrap: wrap; }
+        .history-item {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 12px; background: #f1f5f9; border-radius: 8px;
+            font-size: 0.82rem; color: #475569; cursor: pointer; transition: background 0.2s;
         }
+        .history-item:hover { background: #e2e8f0; }
+        .history-item .hist-close { color: #94a3b8; font-weight: 700; }
+        .history-item .hist-close:hover { color: #dc2626; }
 
+        .no-events { text-align: center; padding: 30px; color: #94a3b8; font-size: 0.9rem; }
         .error {
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            color: #dc2626;
-            padding: 14px 18px;
-            border-radius: 10px;
-            margin-bottom: 16px;
-            display: none;
-            font-size: 0.9rem;
+            background: #fef2f2; border: 1px solid #fecaca; color: #dc2626;
+            padding: 12px 16px; border-radius: 10px; margin-bottom: 14px;
+            display: none; font-size: 0.88rem;
         }
-
         .error.active { display: block; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -416,231 +270,407 @@
         </div>
 
         <div class="about">
-            <p>
-                <strong>Как это работает:</strong> вы вводите названия брендов и выбираете временной диапазон.
-                Сервис автоматически ищет в новостных источниках (РБК, Коммерсантъ, Forbes, ТАСС, Ведомости и др.)
-                события, которые могли повлиять на бизнес-метрики компании: выручку, узнаваемость, репутацию.
-            </p>
-            <p>
-                Среди таких событий: ребрендинг, судебные разбирательства, санкции, запуск новых продуктов,
-                смена руководства, крупные сделки и партнёрства. AI-агент анализирует найденные статьи
-                и формирует структурированный список. Результаты можно выгрузить в CSV с dummy-переменными
-                (0 до события, 1 после) для использования в моделях.
-            </p>
+            <p><strong>Как это работает:</strong> вы вводите названия брендов и выбираете временной диапазон.
+            Сервис ищет в новостных источниках (РБК, Коммерсантъ, Forbes, ТАСС и др.) события,
+            которые могли повлиять на бизнес-метрики: выручку, узнаваемость, репутацию.</p>
+            <p>AI-агент анализирует статьи и формирует структурированный список с тональностью.
+            Результаты можно фильтровать, сортировать, выбирать нужные и выгружать в CSV.</p>
+        </div>
+
+        <div id="historySection" class="history-section hidden">
+            <h3>История поисков</h3>
+            <div class="history-list" id="historyList"></div>
         </div>
 
         <div class="input-section">
             <label for="brands">Бренды</label>
-            <p class="hint">Введите названия через запятую, например: Сбер, Альфастрахование, Добрый, Exeed</p>
+            <p class="hint">Через запятую: Сбер, Альфастрахование, Добрый, Exeed</p>
             <textarea id="brands" placeholder="Сбер, Альфастрахование, Добрый"></textarea>
             <div class="controls-row">
-                <div class="field">
-                    <label>Год с</label>
-                    <select id="yearFrom"></select>
-                </div>
-                <div class="field">
-                    <label>Год по</label>
-                    <select id="yearTo"></select>
-                </div>
+                <div class="field"><label>Год с</label><select id="yearFrom"></select></div>
+                <div class="field"><label>Год по</label><select id="yearTo"></select></div>
                 <button class="btn btn-primary" id="searchBtn" onclick="startSearch()">Найти события</button>
             </div>
         </div>
 
         <div class="error" id="error"></div>
-
         <div class="loading" id="loading">
             <div class="spinner"></div>
             <p class="loading-text">Ищем события по брендам... Это может занять 1-2 минуты</p>
         </div>
-
         <div class="results" id="results"></div>
     </div>
 
+    <div class="timeline-tooltip" id="tooltip"></div>
+
     <script>
-        let lastResults = null;
-        let activeTab = 0;
+    let lastResults = null;
+    let activeTab = 0;
+    let filters = { categories: new Set(['revenue','awareness','reputation','operations','legal','other']),
+                    sentiments: new Set(['positive','negative','neutral']) };
+    let sortBy = 'date';
+    let excluded = new Set();
 
-        (function initYears() {
-            const cur = new Date().getFullYear();
-            const from = document.getElementById('yearFrom');
-            const to = document.getElementById('yearTo');
-            for (let y = cur; y >= 2015; y--) {
-                from.add(new Option(y, y));
-                to.add(new Option(y, y));
-            }
-            from.value = cur - 3;
-            to.value = cur;
-        })();
+    const catLabels = { revenue:'Выручка', awareness:'Узнаваемость', reputation:'Репутация',
+                        operations:'Операции', legal:'Юридическое', other:'Другое' };
+    const sentLabels = { positive:'Позитивное', negative:'Негативное', neutral:'Нейтральное' };
 
-        async function startSearch() {
-            const input = document.getElementById('brands').value.trim();
-            if (!input) return;
-            const brands = input.split(',').map(b => b.trim()).filter(Boolean);
-            if (!brands.length) return;
+    // --- Init ---
+    (function init() {
+        const cur = new Date().getFullYear();
+        const f = document.getElementById('yearFrom'), t = document.getElementById('yearTo');
+        for (let y = cur; y >= 2015; y--) { f.add(new Option(y,y)); t.add(new Option(y,y)); }
+        f.value = cur - 3; t.value = cur;
+        renderHistory();
+    })();
 
-            const yearFrom = +document.getElementById('yearFrom').value;
-            const yearTo = +document.getElementById('yearTo').value;
-            const btn = document.getElementById('searchBtn');
-            const loading = document.getElementById('loading');
-            const results = document.getElementById('results');
-            const error = document.getElementById('error');
+    // --- History ---
+    function getHistory() {
+        try { return JSON.parse(localStorage.getItem('brandSearchHistory') || '[]'); } catch { return []; }
+    }
+    function saveToHistory(brands, yearFrom, yearTo) {
+        let h = getHistory();
+        const key = `${brands.join(', ')} (${yearFrom}-${yearTo})`;
+        h = h.filter(x => x.key !== key);
+        h.unshift({ key, brands, yearFrom, yearTo, ts: Date.now() });
+        if (h.length > 10) h = h.slice(0, 10);
+        localStorage.setItem('brandSearchHistory', JSON.stringify(h));
+        renderHistory();
+    }
+    function removeHistory(idx) {
+        let h = getHistory(); h.splice(idx, 1);
+        localStorage.setItem('brandSearchHistory', JSON.stringify(h));
+        renderHistory();
+    }
+    function loadHistory(idx) {
+        const h = getHistory()[idx]; if (!h) return;
+        document.getElementById('brands').value = h.brands.join(', ');
+        document.getElementById('yearFrom').value = h.yearFrom;
+        document.getElementById('yearTo').value = h.yearTo;
+    }
+    function renderHistory() {
+        const h = getHistory(), sec = document.getElementById('historySection'),
+              list = document.getElementById('historyList');
+        if (!h.length) { sec.classList.add('hidden'); return; }
+        sec.classList.remove('hidden');
+        list.innerHTML = h.map((item, i) =>
+            `<span class="history-item" onclick="loadHistory(${i})">${esc(item.key)}
+             <span class="hist-close" onclick="event.stopPropagation();removeHistory(${i})">x</span></span>`
+        ).join('');
+    }
 
-            btn.disabled = true;
-            loading.classList.add('active');
-            results.classList.remove('active');
-            error.classList.remove('active');
-            results.innerHTML = '';
+    // --- Search ---
+    async function startSearch() {
+        const input = document.getElementById('brands').value.trim();
+        if (!input) return;
+        const brands = input.split(',').map(b => b.trim()).filter(Boolean);
+        if (!brands.length) return;
+        const yearFrom = +document.getElementById('yearFrom').value;
+        const yearTo = +document.getElementById('yearTo').value;
+        const btn = document.getElementById('searchBtn');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const error = document.getElementById('error');
 
-            try {
-                const resp = await fetch('/api/search', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ brands, year_from: yearFrom, year_to: yearTo }),
-                });
-                if (!resp.ok) throw new Error(await resp.text());
-                const data = await resp.json();
-                lastResults = data.results;
-                activeTab = 0;
-                renderResults(data.results);
-            } catch (e) {
-                error.textContent = e.message;
-                error.classList.add('active');
-            } finally {
-                btn.disabled = false;
-                loading.classList.remove('active');
-            }
-        }
+        btn.disabled = true; loading.classList.add('active');
+        results.classList.remove('active'); error.classList.remove('active');
+        results.innerHTML = '';
 
-        function switchTab(idx) {
-            activeTab = idx;
-            document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
-            document.querySelectorAll('.brand-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
-        }
-
-        function renderResults(brandResults) {
-            const container = document.getElementById('results');
-            container.innerHTML = '';
-
-            const totalEvents = brandResults.reduce((s, b) => s + b.events.length, 0);
-
-            // Summary
-            const summary = document.createElement('div');
-            summary.className = 'events-summary';
-            summary.innerHTML = `
-                <div class="summary-stat"><div class="num">${brandResults.length}</div><div class="label">${brandResults.length === 1 ? 'бренд' : 'брендов'}</div></div>
-                <div class="summary-stat"><div class="num">${totalEvents}</div><div class="label">событий найдено</div></div>
-            `;
-            container.appendChild(summary);
-
-            // CSV export
-            const csv = document.createElement('div');
-            csv.className = 'csv-section';
-            csv.innerHTML = `
-                <h3>Экспорт в CSV (dummy-переменные)</h3>
-                <div class="csv-row">
-                    <div class="field">
-                        <label>Начало</label>
-                        <input type="date" id="csvStart" value="${document.getElementById('yearFrom').value}-01-01">
-                    </div>
-                    <div class="field">
-                        <label>Конец</label>
-                        <input type="date" id="csvEnd" value="${document.getElementById('yearTo').value}-12-31">
-                    </div>
-                    <div class="field">
-                        <label>Частота</label>
-                        <select id="csvFreq">
-                            <option value="D">День</option>
-                            <option value="W">Неделя</option>
-                            <option value="M" selected>Месяц</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-csv" onclick="downloadCsv()">Скачать CSV</button>
-                </div>
-            `;
-            container.appendChild(csv);
-
-            // Tabs
-            if (brandResults.length > 1) {
-                const tabs = document.createElement('div');
-                tabs.className = 'tabs';
-                brandResults.forEach((br, i) => {
-                    const t = document.createElement('button');
-                    t.className = 'tab' + (i === 0 ? ' active' : '');
-                    t.innerHTML = `${esc(br.brand)}<span class="event-count">${br.events.length}</span>`;
-                    t.onclick = () => switchTab(i);
-                    tabs.appendChild(t);
-                });
-                container.appendChild(tabs);
-            }
-
-            // Panels
-            const catLabels = {
-                revenue: 'Выручка', awareness: 'Узнаваемость',
-                reputation: 'Репутация', operations: 'Операции', legal: 'Юридическое',
-            };
-
-            brandResults.forEach((br, i) => {
-                const panel = document.createElement('div');
-                panel.className = 'brand-panel' + (i === 0 ? ' active' : '');
-
-                if (!br.events.length) {
-                    panel.innerHTML = '<div class="no-events">Событий не найдено</div>';
-                } else {
-                    panel.innerHTML = br.events.map(ev => {
-                        const cat = ev.impact_category || 'other';
-                        return `
-                        <div class="event-card">
-                            <div class="event-header">
-                                <span class="event-title">${esc(ev.event_name)}</span>
-                                <span class="event-date">${esc(ev.event_date)}</span>
-                            </div>
-                            <p class="event-description">${esc(ev.description)}</p>
-                            <div class="event-meta">
-                                <span class="event-category cat-${cat}">${esc(catLabels[cat] || cat)}</span>
-                                <span class="event-source">
-                                    <a href="${esc(ev.source_url)}" target="_blank" rel="noopener">${esc(ev.source_title || 'Источник')}</a>
-                                </span>
-                            </div>
-                        </div>`;
-                    }).join('');
-                }
-                container.appendChild(panel);
+        try {
+            const resp = await fetch('/api/search', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ brands, year_from: yearFrom, year_to: yearTo }),
             });
+            if (!resp.ok) throw new Error(await resp.text());
+            const data = await resp.json();
+            lastResults = data.results;
+            activeTab = 0; excluded = new Set();
+            filters.categories = new Set(['revenue','awareness','reputation','operations','legal','other']);
+            filters.sentiments = new Set(['positive','negative','neutral']);
+            sortBy = 'date';
+            saveToHistory(brands, yearFrom, yearTo);
+            renderResults(data.results);
+        } catch (e) {
+            error.textContent = e.message; error.classList.add('active');
+        } finally {
+            btn.disabled = false; loading.classList.remove('active');
+        }
+    }
 
-            container.classList.add('active');
+    // --- Render ---
+    function switchTab(idx) {
+        activeTab = idx;
+        document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+        document.querySelectorAll('.brand-panel').forEach((p,i) => p.classList.toggle('active', i===idx));
+        renderTimeline();
+    }
+
+    function toggleFilter(type, val) {
+        const set = type === 'cat' ? filters.categories : filters.sentiments;
+        set.has(val) ? set.delete(val) : set.add(val);
+        renderPanels();
+    }
+
+    function setSort(val) { sortBy = val; renderPanels(); }
+
+    function toggleEvent(brandIdx, evIdx) {
+        const key = `${brandIdx}-${evIdx}`;
+        excluded.has(key) ? excluded.delete(key) : excluded.add(key);
+        renderPanels();
+    }
+
+    function getFilteredEvents(brand, brandIdx) {
+        let events = brand.events.map((ev, i) => ({ ...ev, _idx: i, _brandIdx: brandIdx }));
+        events = events.filter(ev => filters.categories.has(ev.impact_category || 'other')
+                                  && filters.sentiments.has(ev.sentiment || 'neutral'));
+        if (sortBy === 'date') events.sort((a,b) => (a.event_date||'').localeCompare(b.event_date||''));
+        else if (sortBy === 'category') events.sort((a,b) => (a.impact_category||'').localeCompare(b.impact_category||''));
+        else if (sortBy === 'sentiment') events.sort((a,b) => (a.sentiment||'').localeCompare(b.sentiment||''));
+        return events;
+    }
+
+    function renderResults(brandResults) {
+        const container = document.getElementById('results');
+        container.innerHTML = '';
+        const totalEvents = brandResults.reduce((s,b) => s + b.events.length, 0);
+
+        // Summary
+        const pos = brandResults.reduce((s,b) => s + b.events.filter(e=>e.sentiment==='positive').length, 0);
+        const neg = brandResults.reduce((s,b) => s + b.events.filter(e=>e.sentiment==='negative').length, 0);
+        container.innerHTML = `
+            <div class="events-summary">
+                <div class="summary-stat"><div class="num">${brandResults.length}</div><div class="label">брендов</div></div>
+                <div class="summary-stat"><div class="num">${totalEvents}</div><div class="label">событий</div></div>
+                <div class="summary-stat"><div class="num" style="color:#22c55e">${pos}</div><div class="label">позитивных</div></div>
+                <div class="summary-stat"><div class="num" style="color:#ef4444">${neg}</div><div class="label">негативных</div></div>
+            </div>
+        `;
+
+        // CSV
+        const csvDiv = document.createElement('div'); csvDiv.className = 'csv-section';
+        csvDiv.innerHTML = `
+            <h3>Экспорт в CSV (dummy-переменные)</h3>
+            <div class="csv-row">
+                <div class="field"><label>Начало</label><input type="date" id="csvStart" value="${document.getElementById('yearFrom').value}-01-01"></div>
+                <div class="field"><label>Конец</label><input type="date" id="csvEnd" value="${document.getElementById('yearTo').value}-12-31"></div>
+                <div class="field"><label>Частота</label>
+                    <select id="csvFreq"><option value="D">День</option><option value="W">Неделя</option><option value="M" selected>Месяц</option></select>
+                </div>
+                <button class="btn btn-csv btn-sm" onclick="downloadCsv()">Скачать CSV</button>
+                <button class="btn btn-outline btn-sm" onclick="togglePreview()">Предпросмотр</button>
+            </div>
+            <div id="csvPreviewWrap" class="hidden"></div>
+        `;
+        container.appendChild(csvDiv);
+
+        // Timeline
+        container.insertAdjacentHTML('beforeend', `
+            <div class="timeline-section"><h3>Таймлайн событий</h3><div id="timelineWrap"></div></div>
+        `);
+
+        // Tabs
+        if (brandResults.length > 1) {
+            const tabs = document.createElement('div'); tabs.className = 'tabs';
+            brandResults.forEach((br, i) => {
+                const t = document.createElement('button');
+                t.className = 'tab' + (i===0?' active':'');
+                t.innerHTML = `${esc(br.brand)}<span class="event-count">${br.events.length}</span>`;
+                t.onclick = () => switchTab(i);
+                tabs.appendChild(t);
+            });
+            container.appendChild(tabs);
         }
 
-        async function downloadCsv() {
-            if (!lastResults) return;
-            try {
-                const resp = await fetch('/api/csv', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        results: lastResults,
-                        start_date: document.getElementById('csvStart').value,
-                        end_date: document.getElementById('csvEnd').value,
-                        freq: document.getElementById('csvFreq').value,
-                    }),
-                });
-                if (!resp.ok) throw new Error(await resp.text());
-                const blob = await resp.blob();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'brand_events.csv';
-                a.click();
-                URL.revokeObjectURL(url);
-            } catch (e) {
-                alert(e.message);
-            }
-        }
+        // Toolbar
+        container.insertAdjacentHTML('beforeend', `
+            <div class="toolbar" id="toolbar">
+                <label>Фильтры:</label>
+                <div class="filter-group" id="filterSent"></div>
+                <div class="filter-group" id="filterCat"></div>
+                <label style="margin-left:auto">Сортировка:</label>
+                <select onchange="setSort(this.value)" id="sortSelect">
+                    <option value="date">По дате</option>
+                    <option value="category">По категории</option>
+                    <option value="sentiment">По тональности</option>
+                </select>
+            </div>
+        `);
 
-        function esc(s) {
-            const d = document.createElement('div');
-            d.textContent = s || '';
-            return d.innerHTML;
+        // Panels placeholder
+        brandResults.forEach((br, i) => {
+            const panel = document.createElement('div');
+            panel.className = 'brand-panel' + (i===0?' active':'');
+            panel.id = `panel-${i}`;
+            container.appendChild(panel);
+        });
+
+        container.classList.add('active');
+        renderFilterChips();
+        renderPanels();
+        renderTimeline();
+    }
+
+    function renderFilterChips() {
+        const sentWrap = document.getElementById('filterSent');
+        const catWrap = document.getElementById('filterCat');
+        sentWrap.innerHTML = ['positive','negative','neutral'].map(s =>
+            `<label class="chip chip-${s} ${filters.sentiments.has(s)?'':'off'}" onclick="toggleFilter('sent','${s}')">
+                ${sentLabels[s]}</label>`
+        ).join('');
+        catWrap.innerHTML = Object.keys(catLabels).map(c =>
+            `<label class="chip chip-${c} ${filters.categories.has(c)?'':'off'}" onclick="toggleFilter('cat','${c}')">
+                ${catLabels[c]}</label>`
+        ).join('');
+    }
+
+    function renderPanels() {
+        if (!lastResults) return;
+        renderFilterChips();
+        lastResults.forEach((br, i) => {
+            const panel = document.getElementById(`panel-${i}`);
+            if (!panel) return;
+            const events = getFilteredEvents(br, i);
+            if (!events.length) { panel.innerHTML = '<div class="no-events">Нет событий по фильтрам</div>'; return; }
+            panel.innerHTML = events.map(ev => {
+                const cat = ev.impact_category || 'other';
+                const sent = ev.sentiment || 'neutral';
+                const key = `${i}-${ev._idx}`;
+                const isExcluded = excluded.has(key);
+                return `
+                <div class="event-card sentiment-${sent} ${isExcluded?'excluded':''}">
+                    <input type="checkbox" class="event-checkbox" ${isExcluded?'':'checked'}
+                           onchange="toggleEvent(${i},${ev._idx})">
+                    <div class="event-body">
+                        <div class="event-header">
+                            <span class="event-title">${esc(ev.event_name)}</span>
+                            <span class="event-date">${esc(ev.event_date)}</span>
+                        </div>
+                        <p class="event-description">${esc(ev.description)}</p>
+                        <div class="event-meta">
+                            <span class="event-badge cat-${cat}">${esc(catLabels[cat]||cat)}</span>
+                            <span class="event-badge sent-${sent}">${esc(sentLabels[sent]||sent)}</span>
+                            <span class="event-source"><a href="${esc(ev.source_url)}" target="_blank" rel="noopener">${esc(ev.source_title||'Источник')}</a></span>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        });
+    }
+
+    // --- Timeline ---
+    function renderTimeline() {
+        const wrap = document.getElementById('timelineWrap');
+        if (!wrap || !lastResults) return;
+        const br = lastResults[activeTab];
+        if (!br || !br.events.length) { wrap.innerHTML = '<div class="no-events">Нет событий</div>'; return; }
+
+        const events = br.events.filter(e => e.event_date).sort((a,b) => a.event_date.localeCompare(b.event_date));
+        if (!events.length) { wrap.innerHTML = ''; return; }
+
+        const minDate = events[0].event_date;
+        const maxDate = events[events.length-1].event_date;
+        const range = new Date(maxDate) - new Date(minDate) || 1;
+
+        let dots = '';
+        events.forEach((ev, i) => {
+            const pos = ((new Date(ev.event_date) - new Date(minDate)) / range) * 100;
+            const sent = ev.sentiment || 'neutral';
+            dots += `<div class="timeline-event ${sent}" style="position:absolute;left:calc(${pos}% - 7px)"
+                data-tip="${esc(ev.event_date)}: ${esc(ev.event_name)}"
+                onmouseenter="showTip(event,this)" onmouseleave="hideTip()"></div>`;
+        });
+
+        wrap.innerHTML = `
+            <div class="timeline" style="position:relative;height:50px;min-width:100%">
+                <div class="timeline-bar"></div>
+                ${dots}
+            </div>
+            <div class="timeline-labels"><span>${esc(minDate)}</span><span>${esc(maxDate)}</span></div>
+        `;
+    }
+
+    function showTip(e, el) {
+        const tip = document.getElementById('tooltip');
+        tip.textContent = el.dataset.tip;
+        tip.classList.add('visible');
+        tip.style.left = e.pageX + 10 + 'px';
+        tip.style.top = e.pageY - 30 + 'px';
+    }
+    function hideTip() { document.getElementById('tooltip').classList.remove('visible'); }
+
+    // --- CSV ---
+    function getIncludedResults() {
+        if (!lastResults) return [];
+        return lastResults.map((br, i) => ({
+            ...br,
+            events: br.events.filter((_, j) => !excluded.has(`${i}-${j}`))
+        }));
+    }
+
+    function togglePreview() {
+        const wrap = document.getElementById('csvPreviewWrap');
+        if (!wrap.classList.contains('hidden')) { wrap.classList.add('hidden'); return; }
+        const results = getIncludedResults();
+        const allEvents = [];
+        results.forEach(br => br.events.forEach(ev => {
+            allEvents.push({ col: `${ev.brand} | ${ev.event_name}`, date: ev.event_date });
+        }));
+        if (!allEvents.length) { wrap.innerHTML = '<p style="padding:10px;color:#94a3b8">Нет выбранных событий</p>'; wrap.classList.remove('hidden'); return; }
+
+        const start = document.getElementById('csvStart').value;
+        const end = document.getElementById('csvEnd').value;
+        const freq = document.getElementById('csvFreq').value;
+        const dates = generateDates(start, end, freq).slice(0, 20);
+
+        let html = '<div class="csv-preview"><table><thead><tr><th>date</th>';
+        allEvents.forEach(e => html += `<th>${esc(e.col)}</th>`);
+        html += '</tr></thead><tbody>';
+        dates.forEach(d => {
+            html += `<tr><td>${d}</td>`;
+            allEvents.forEach(e => {
+                const val = e.date && d >= e.date ? 1 : (e.date ? 0 : '');
+                html += `<td>${val}</td>`;
+            });
+            html += '</tr>';
+        });
+        if (dates.length === 20) html += `<tr><td colspan="${allEvents.length+1}" style="text-align:center;color:#94a3b8">... ещё строки в CSV</td></tr>`;
+        html += '</tbody></table></div>';
+        wrap.innerHTML = html;
+        wrap.classList.remove('hidden');
+    }
+
+    function generateDates(start, end, freq) {
+        const dates = []; let cur = new Date(start); const endD = new Date(end);
+        while (cur <= endD && dates.length < 500) {
+            dates.push(cur.toISOString().slice(0,10));
+            if (freq === 'W') cur.setDate(cur.getDate()+7);
+            else if (freq === 'M') cur.setMonth(cur.getMonth()+1);
+            else cur.setDate(cur.getDate()+1);
         }
+        return dates;
+    }
+
+    async function downloadCsv() {
+        const results = getIncludedResults();
+        if (!results.length) return;
+        try {
+            const resp = await fetch('/api/csv', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    results, start_date: document.getElementById('csvStart').value,
+                    end_date: document.getElementById('csvEnd').value,
+                    freq: document.getElementById('csvFreq').value,
+                }),
+            });
+            if (!resp.ok) throw new Error(await resp.text());
+            const blob = await resp.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'brand_events.csv'; a.click();
+            URL.revokeObjectURL(url);
+        } catch (e) { alert(e.message); }
+    }
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
     </script>
 </body>
 </html>

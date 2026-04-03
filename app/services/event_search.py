@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+import time
 from functools import partial
 
 from ddgs import DDGS
@@ -11,18 +12,9 @@ from app.models import BrandEvent, BrandEventsResponse
 
 logger = logging.getLogger(__name__)
 
-SITES = [
-    "rbc.ru", "kommersant.ru", "vedomosti.ru", "forbes.ru",
-    "tass.ru", "ria.ru", "interfax.ru", "lenta.ru",
-    "gazeta.ru", "iz.ru", "vc.ru", "banki.ru",
-    "sostav.ru", "adindex.ru", "retail.ru",
-]
-
-SITE_FILTER = " OR ".join(f"site:{s}" for s in SITES)
-
 SEARCH_QUERIES = [
     "{brand} скандал суд штраф {year}",
-    "{brand} ребрендинг новый продукт запуск {year}",
+    "{brand} ребрендинг запуск продукт {year}",
     "{brand} выручка санкции кризис {year}",
     "{brand} партнёрство слияние сделка {year}",
 ]
@@ -44,6 +36,7 @@ SYSTEM_PROMPT = """\
     "event_date": "YYYY-MM-DD",
     "description": "2-3 предложения",
     "impact_category": "revenue|awareness|reputation|operations|legal",
+    "sentiment": "positive|negative|neutral",
     "source_url": "https://...",
     "source_title": "название источника"
   }
@@ -67,14 +60,14 @@ def _search_ddg(brand: str, year_from: int, year_to: int) -> list[dict]:
     with DDGS() as ddgs:
         for year in years:
             for q_template in SEARCH_QUERIES:
-                query = f"{q_template.format(brand=brand, year=year)} ({SITE_FILTER})"
+                query = q_template.format(brand=brand, year=year)
                 try:
                     results = list(ddgs.text(query, max_results=5, region="ru-ru"))
                     all_results.extend(results)
                     logger.info(f"DDG: {len(results)} results for '{brand} {year}'")
                 except Exception as e:
                     logger.error(f"DDG search failed: {e}")
-                    continue
+                time.sleep(1)
 
     return all_results
 
@@ -195,6 +188,7 @@ def _parse_events(
                     event_date=item.get("event_date", ""),
                     description=item.get("description", ""),
                     impact_category=item.get("impact_category", "other"),
+                    sentiment=item.get("sentiment", "neutral"),
                     source_url=source_url,
                     source_title=item.get("source_title", ""),
                 )
