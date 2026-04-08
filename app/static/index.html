@@ -67,13 +67,30 @@
         /* Loading */
         .loading { display: none; text-align: center; padding: 50px 20px; }
         .loading.active { display: block; }
-        .spinner {
-            width: 40px; height: 40px; border: 3px solid #e2e8f0;
-            border-top-color: #4f46e5; border-radius: 50%;
-            animation: spin 0.7s linear infinite; margin: 0 auto 16px;
+        .loading-animation {
+            display: flex; justify-content: center; gap: 6px; margin-bottom: 24px;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text { color: #64748b; font-size: 0.9rem; }
+        .loading-dot {
+            width: 12px; height: 12px; border-radius: 50%;
+            animation: bounce 1.4s ease-in-out infinite both;
+        }
+        .loading-dot:nth-child(1) { background: #6366f1; animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { background: #8b5cf6; animation-delay: -0.16s; }
+        .loading-dot:nth-child(3) { background: #a78bfa; animation-delay: 0s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0.4); opacity: 0.3; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        .loading-title { color: #1e293b; font-size: 1.05rem; font-weight: 600; margin-bottom: 12px; }
+        .loading-steps { list-style: none; text-align: left; display: inline-block; }
+        .loading-steps li {
+            padding: 6px 0; color: #94a3b8; font-size: 0.88rem;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .loading-steps li.active { color: #4f46e5; font-weight: 500; }
+        .loading-steps li.done { color: #22c55e; }
+        .step-icon { width: 18px; text-align: center; font-size: 0.8rem; }
+        .loading-hint { color: #94a3b8; font-size: 0.82rem; margin-top: 16px; }
 
         /* Results */
         .results { display: none; }
@@ -334,8 +351,19 @@
 
         <div class="error" id="error"></div>
         <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p class="loading-text">Ищем события по брендам... Это может занять 1-2 минуты</p>
+            <div class="loading-animation">
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+            </div>
+            <p class="loading-title">Ищем события по брендам</p>
+            <ul class="loading-steps" id="loadingSteps">
+                <li class="active"><span class="step-icon">&#9679;</span> Поиск новостей по каждому бренду и году</li>
+                <li><span class="step-icon">&#9679;</span> Фильтрация дубликатов</li>
+                <li><span class="step-icon">&#9679;</span> AI-анализ и отбор значимых событий</li>
+                <li><span class="step-icon">&#9679;</span> Формирование результатов</li>
+            </ul>
+            <p class="loading-hint">Это может занять несколько минут, в зависимости от количества брендов и выбранного периода</p>
         </div>
         <div class="results" id="results"></div>
     </div>
@@ -440,6 +468,23 @@
     function getHistory() {
         try { return JSON.parse(localStorage.getItem('brandSearchHistory') || '[]'); } catch { return []; }
     }
+    let loadingInterval = null;
+    function startLoadingAnimation() {
+        let step = 0;
+        const steps = document.querySelectorAll('#loadingSteps li');
+        loadingInterval = setInterval(() => {
+            steps.forEach((s, i) => {
+                s.className = i < step ? 'done' : i === step ? 'active' : '';
+                s.querySelector('.step-icon').innerHTML = i < step ? '&#10003;' : '&#9679;';
+            });
+            step++;
+            if (step >= steps.length) step = steps.length - 1;
+        }, 5000);
+    }
+    function stopLoadingAnimation() {
+        if (loadingInterval) { clearInterval(loadingInterval); loadingInterval = null; }
+    }
+
     function saveToHistory(brands, yearFrom, yearTo) {
         let h = getHistory();
         const key = `${brands.join(', ')} (${yearFrom}-${yearTo})`;
@@ -493,6 +538,7 @@
         btn.disabled = true; loading.classList.add('active');
         results.classList.remove('active'); error.classList.remove('active');
         results.innerHTML = '';
+        startLoadingAnimation();
 
         try {
             const resp = await fetch('/api/search', {
@@ -514,6 +560,7 @@
             error.textContent = e.message; error.classList.add('active');
         } finally {
             btn.disabled = false; loading.classList.remove('active');
+            stopLoadingAnimation();
         }
     }
 
