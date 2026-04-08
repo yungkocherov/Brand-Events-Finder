@@ -21,37 +21,49 @@ EVENT_TYPES = {
         "label": "Ребрендинг / смена названия",
         "query": "{brand} ребрендинг смена названия логотип {year}",
     },
-    "sanctions": {
-        "label": "Санкции / ограничения",
-        "query": "{brand} санкции ограничения запрет блокировка {year}",
-    },
-    "scandal": {
-        "label": "Крупный скандал / суд",
-        "query": "{brand} скандал суд штраф иск {year}",
-    },
     "new_product": {
         "label": "Запуск нового продукта",
         "query": "{brand} запуск новый продукт сервис релиз {year}",
-    },
-    "management": {
-        "label": "Смена собственника / руководства",
-        "query": "{brand} смена CEO директор руководство назначение {year}",
-    },
-    "ad_campaign": {
-        "label": "Крупная рекламная кампания",
-        "query": "{brand} рекламная кампания спонсорство амбассадор {year}",
     },
     "supply": {
         "label": "Перебои с поставками / дефицит",
         "query": "{brand} дефицит перебои поставки нехватка {year}",
     },
+    "ad_campaign": {
+        "label": "Крупная рекламная кампания",
+        "query": "{brand} рекламная кампания спонсорство амбассадор {year}",
+    },
+    "scandal": {
+        "label": "Крупный скандал / суд",
+        "query": "{brand} скандал суд штраф иск {year}",
+    },
+    "sanctions": {
+        "label": "Санкции / ограничения",
+        "query": "{brand} санкции ограничения запрет блокировка {year}",
+    },
     "price_change": {
         "label": "Изменение цен",
         "query": "{brand} повышение цен подорожание скидки {year}",
     },
+    "management": {
+        "label": "Смена собственника / руководства",
+        "query": "{brand} смена CEO директор руководство назначение {year}",
+    },
     "merger": {
         "label": "Слияние / поглощение",
         "query": "{brand} слияние поглощение покупка сделка {year}",
+    },
+    "pharma_registration": {
+        "label": "Регистрация / отзыв препарата",
+        "query": "{brand} регистрация отзыв препарат лекарство Минздрав {year}",
+    },
+    "pharma_clinical": {
+        "label": "Клинические исследования",
+        "query": "{brand} клинические исследования испытания эффективность {year}",
+    },
+    "pharma_safety": {
+        "label": "Безопасность / побочные эффекты",
+        "query": "{brand} побочные эффекты безопасность отзыв партии Росздравнадзор {year}",
     },
 }
 
@@ -71,7 +83,7 @@ SYSTEM_PROMPT = """\
 - event_name: краткое название события
 - event_date: дата в формате YYYY-MM-DD (если неизвестна — YYYY-MM-01)
 - description: 1-2 предложения
-- impact_category: СТРОГО одно из: market_exit, rebrand, sanctions, scandal, new_product, management, ad_campaign, supply, price_change, merger
+- impact_category: СТРОГО одно из: market_exit, rebrand, new_product, supply, ad_campaign, scandal, sanctions, price_change, management, merger, pharma_registration, pharma_clinical, pharma_safety
 - sentiment: СТРОГО одно из: positive, negative, neutral
 - source_url: URL из результатов поиска
 - source_title: домен источника
@@ -82,7 +94,7 @@ SYSTEM_PROMPT = """\
     "event_name": "...",
     "event_date": "YYYY-MM-DD",
     "description": "...",
-    "impact_category": "market_exit|rebrand|sanctions|scandal|new_product|management|ad_campaign|supply|price_change|merger",
+    "impact_category": "market_exit|rebrand|new_product|supply|ad_campaign|scandal|sanctions|price_change|management|merger|pharma_registration|pharma_clinical|pharma_safety",
     "sentiment": "positive|negative|neutral",
     "source_url": "https://...",
     "source_title": "..."
