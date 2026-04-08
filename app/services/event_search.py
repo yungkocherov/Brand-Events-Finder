@@ -56,12 +56,13 @@ EVENT_TYPES = {
 }
 
 SYSTEM_PROMPT = """\
-Ты — бизнес-аналитик. Тебе даны результаты поиска по бренду «{brand}».
+Ты — бизнес-аналитик. Тебе даны результаты поиска по бренду «{brand}»{industry_note}.
 Отфильтруй и оставь ТОЛЬКО те результаты, которые описывают реальные значимые \
-события, непосредственно связанные с брендом «{brand}».
+события, непосредственно связанные с брендом «{brand}»{industry_note}.
 
 Отсей:
-- Статьи, не связанные с брендом
+- Статьи, не связанные с брендом «{brand}»
+- Статьи про другие компании/продукты с похожим названием, но из ДРУГОЙ отрасли
 - Общие новости рынка/отрасли без упоминания бренда
 - Дубликаты одного и того же события
 - Незначительные события
@@ -134,7 +135,7 @@ def _search_ddg(
 
 
 def _analyze_with_mistral(
-    api_key: str, brand: str, search_results: list[dict]
+    api_key: str, brand: str, search_results: list[dict], industry: str = ""
 ) -> str:
     """Use Mistral to filter and structure search results."""
     client = Mistral(api_key=api_key)
@@ -149,7 +150,8 @@ def _analyze_with_mistral(
         )
     search_text = "\n\n".join(formatted)
 
-    prompt = SYSTEM_PROMPT.format(brand=brand)
+    industry_note = f" (отрасль: {industry})" if industry else ""
+    prompt = SYSTEM_PROMPT.format(brand=brand, industry_note=industry_note)
 
     response = client.chat.complete(
         model="mistral-small-latest",
@@ -230,7 +232,7 @@ async def search_brand_events(
     if api_key:
         try:
             ai_response = await loop.run_in_executor(
-                None, partial(_analyze_with_mistral, api_key, brand, search_results)
+                None, partial(_analyze_with_mistral, api_key, brand, search_results, industry)
             )
             events = _parse_events(ai_response, brand)
         except Exception as e:
