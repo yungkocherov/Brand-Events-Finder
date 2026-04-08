@@ -96,8 +96,7 @@
         }
         .timeline-section h3 { font-size: 0.9rem; color: #334155; margin-bottom: 12px; }
         .timeline {
-            position: relative; display: flex; align-items: flex-start;
-            overflow-x: auto; padding: 8px 0 16px; gap: 0;
+            position: relative; padding: 8px 0 16px;
         }
         .timeline-bar {
             position: absolute; top: 24px; left: 0; right: 0;
@@ -461,7 +460,10 @@
             const data = await resp.json();
             lastResults = data.results;
             activeTab = 0; excluded = new Set();
-            filters.categories = new Set(eventTypes);
+            // Init filters from actual event categories in results
+            const allCats = new Set();
+            data.results.forEach(b => b.events.forEach(e => allCats.add(e.impact_category || 'other')));
+            filters.categories = allCats;
             sortBy = 'date';
             saveToHistory(brands, yearFrom, yearTo);
             renderResults(data.results);
@@ -578,9 +580,9 @@
 
     function renderFilterChips() {
         const catWrap = document.getElementById('filterCat');
-        catWrap.innerHTML = [...filters.categories].concat(
-            [...new Set(lastResults?.flatMap(b => b.events.map(e => e.impact_category)) || [])]
-        ).filter((v,i,a) => a.indexOf(v)===i).map(c =>
+        const allCats = new Set();
+        if (lastResults) lastResults.forEach(b => b.events.forEach(e => allCats.add(e.impact_category || 'other')));
+        catWrap.innerHTML = [...allCats].map(c =>
             `<label class="chip ${filters.categories.has(c)?'':'off'}"
                     style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe"
                     onclick="toggleFilter('cat','${c}')">
@@ -637,15 +639,15 @@
 
         let dots = '';
         events.forEach((ev, i) => {
-            const pos = ((new Date(ev.event_date) - new Date(minDate)) / range) * 100;
+            const pct = range === 1 ? 50 : ((new Date(ev.event_date) - new Date(minDate)) / range) * 90 + 5;
             const cat = ev.impact_category || 'other';
-            dots += `<div class="timeline-event ${cat}" style="position:absolute;left:calc(${pos}% - 7px)"
+            dots += `<div class="timeline-event" style="position:absolute;left:${pct}%;background:var(--dot-color,#818cf8)"
                 data-tip="${esc(ev.event_date)}: ${esc(ev.event_name)}"
                 onmouseenter="showTip(event,this)" onmouseleave="hideTip()"></div>`;
         });
 
         wrap.innerHTML = `
-            <div class="timeline" style="position:relative;height:50px;min-width:100%">
+            <div style="position:relative;height:50px;padding:0 10px">
                 <div class="timeline-bar"></div>
                 ${dots}
             </div>
