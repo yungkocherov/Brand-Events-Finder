@@ -70,7 +70,8 @@ SYSTEM_PROMPT = """\
 - event_name: краткое название события
 - event_date: дата в формате YYYY-MM-DD (если неизвестна — YYYY-MM-01)
 - description: 1-2 предложения
-- impact_category: категория из списка результатов
+- impact_category: СТРОГО одно из: market_exit, rebrand, sanctions, scandal, new_product, management, ad_campaign, supply, price_change, merger
+- sentiment: СТРОГО одно из: positive, negative, neutral
 - source_url: URL из результатов поиска
 - source_title: домен источника
 
@@ -80,7 +81,8 @@ SYSTEM_PROMPT = """\
     "event_name": "...",
     "event_date": "YYYY-MM-DD",
     "description": "...",
-    "impact_category": "...",
+    "impact_category": "market_exit|rebrand|sanctions|scandal|new_product|management|ad_campaign|supply|price_change|merger",
+    "sentiment": "positive|negative|neutral",
     "source_url": "https://...",
     "source_title": "..."
   }}

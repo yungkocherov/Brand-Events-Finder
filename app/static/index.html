@@ -205,8 +205,8 @@
         }
         .event-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); border-left-color: #4f46e5; }
         .event-card.excluded { opacity: 0.4; }
-        .event-card.sentiment-positive { border-left-color: #22c55e; }
-        .event-card.sentiment-negative { border-left-color: #ef4444; }
+        .event-card.sentiment-positive { border-left-color: #22c55e; background: #f0fdf4; }
+        .event-card.sentiment-negative { border-left-color: #ef4444; background: #fef2f2; }
         .event-card.sentiment-neutral  { border-left-color: #94a3b8; }
         .event-checkbox { margin-top: 3px; width: 16px; height: 16px; accent-color: #4f46e5; cursor: pointer; }
         .event-body { flex: 1; min-width: 0; }
@@ -375,6 +375,7 @@
     let activeTab = 0;
     let filters = { categories: new Set() };
     let sortBy = 'date';
+    let sortAsc = true;
     let excluded = new Set();
 
     function getCatLabel(key) { return eventTypesData[key] || key; }
@@ -578,6 +579,7 @@
     }
 
     function setSort(val) { sortBy = val; renderPanels(); }
+    function toggleSortDir() { sortAsc = !sortAsc; renderPanels(); }
 
     function toggleEvent(brandIdx, evIdx) {
         const key = `${brandIdx}-${evIdx}`;
@@ -588,8 +590,9 @@
     function getFilteredEvents(brand, brandIdx) {
         let events = brand.events.map((ev, i) => ({ ...ev, _idx: i, _brandIdx: brandIdx }));
         events = events.filter(ev => filters.categories.has(ev.impact_category || 'other'));
-        if (sortBy === 'date') events.sort((a,b) => (a.event_date||'').localeCompare(b.event_date||''));
-        else if (sortBy === 'category') events.sort((a,b) => (a.impact_category||'').localeCompare(b.impact_category||''));
+        const dir = sortAsc ? 1 : -1;
+        if (sortBy === 'date') events.sort((a,b) => dir * (a.event_date||'').localeCompare(b.event_date||''));
+        else if (sortBy === 'category') events.sort((a,b) => dir * (a.impact_category||'').localeCompare(b.impact_category||''));
         return events;
     }
 
@@ -651,6 +654,7 @@
                     <option value="date">По дате</option>
                     <option value="category">По категории</option>
                 </select>
+                <button class="btn btn-outline btn-sm" onclick="toggleSortDir()" id="sortDirBtn" title="Направление сортировки" style="padding:6px 10px;font-size:1rem">&#8593;</button>
             </div>
         `);
 
@@ -683,6 +687,8 @@
     function renderPanels() {
         if (!lastResults) return;
         renderFilterChips();
+        const dirBtn = document.getElementById('sortDirBtn');
+        if (dirBtn) dirBtn.innerHTML = sortAsc ? '&#8593;' : '&#8595;';
         lastResults.forEach((br, i) => {
             const panel = document.getElementById(`panel-${i}`);
             if (!panel) return;
