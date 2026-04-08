@@ -4,9 +4,6 @@ import io
 import re
 from datetime import date, timedelta
 
-from dotenv import load_dotenv
-load_dotenv()
-
 from fastapi import FastAPI, Response
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles

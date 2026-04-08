@@ -110,9 +110,12 @@
             transition: transform 0.2s;
         }
         .timeline-event:hover { transform: scale(1.5); }
-        .timeline-event.positive { background: #22c55e; }
-        .timeline-event.negative { background: #ef4444; }
-        .timeline-event.neutral { background: #94a3b8; }
+        .timeline-event { background: #818cf8; }
+        .timeline-event.revenue { background: #f59e0b; }
+        .timeline-event.awareness { background: #3b82f6; }
+        .timeline-event.reputation { background: #ec4899; }
+        .timeline-event.operations { background: #22c55e; }
+        .timeline-event.legal { background: #ef4444; }
         .timeline-labels {
             display: flex; justify-content: space-between;
             font-size: 0.75rem; color: #94a3b8; margin-top: 8px;
@@ -271,10 +274,11 @@
 
         <div class="about">
             <p><strong>Как это работает:</strong> вы вводите названия брендов и выбираете временной диапазон.
-            Сервис ищет в новостных источниках (РБК, Коммерсантъ, Forbes, ТАСС и др.) события,
-            которые могли повлиять на бизнес-метрики: выручку, узнаваемость, репутацию.</p>
-            <p>AI-агент анализирует статьи и формирует структурированный список с тональностью.
-            Результаты можно фильтровать, сортировать, выбирать нужные и выгружать в CSV.</p>
+            Сервис ищет в новостных источниках события, которые могли повлиять на бизнес-метрики:
+            выручку, узнаваемость, репутацию, операционную деятельность.</p>
+            <p>Поиск ведётся по категориям: суды и штрафы, ребрендинг и новые продукты,
+            финансы и санкции, партнёрства и сделки. Результаты можно фильтровать, сортировать
+            и выгружать в CSV с dummy-переменными для использования в моделях.</p>
         </div>
 
         <div id="historySection" class="history-section hidden">
@@ -306,8 +310,7 @@
     <script>
     let lastResults = null;
     let activeTab = 0;
-    let filters = { categories: new Set(['revenue','awareness','reputation','operations','legal','other']),
-                    sentiments: new Set(['positive','negative','neutral']) };
+    let filters = { categories: new Set(['revenue','awareness','reputation','operations','legal','other']) };
     let sortBy = 'date';
     let excluded = new Set();
 
@@ -386,7 +389,6 @@
             lastResults = data.results;
             activeTab = 0; excluded = new Set();
             filters.categories = new Set(['revenue','awareness','reputation','operations','legal','other']);
-            filters.sentiments = new Set(['positive','negative','neutral']);
             sortBy = 'date';
             saveToHistory(brands, yearFrom, yearTo);
             renderResults(data.results);
@@ -406,8 +408,7 @@
     }
 
     function toggleFilter(type, val) {
-        const set = type === 'cat' ? filters.categories : filters.sentiments;
-        set.has(val) ? set.delete(val) : set.add(val);
+        filters.categories.has(val) ? filters.categories.delete(val) : filters.categories.add(val);
         renderPanels();
     }
 
@@ -421,11 +422,9 @@
 
     function getFilteredEvents(brand, brandIdx) {
         let events = brand.events.map((ev, i) => ({ ...ev, _idx: i, _brandIdx: brandIdx }));
-        events = events.filter(ev => filters.categories.has(ev.impact_category || 'other')
-                                  && filters.sentiments.has(ev.sentiment || 'neutral'));
+        events = events.filter(ev => filters.categories.has(ev.impact_category || 'other'));
         if (sortBy === 'date') events.sort((a,b) => (a.event_date||'').localeCompare(b.event_date||''));
         else if (sortBy === 'category') events.sort((a,b) => (a.impact_category||'').localeCompare(b.impact_category||''));
-        else if (sortBy === 'sentiment') events.sort((a,b) => (a.sentiment||'').localeCompare(b.sentiment||''));
         return events;
     }
 
@@ -435,14 +434,10 @@
         const totalEvents = brandResults.reduce((s,b) => s + b.events.length, 0);
 
         // Summary
-        const pos = brandResults.reduce((s,b) => s + b.events.filter(e=>e.sentiment==='positive').length, 0);
-        const neg = brandResults.reduce((s,b) => s + b.events.filter(e=>e.sentiment==='negative').length, 0);
         container.innerHTML = `
             <div class="events-summary">
                 <div class="summary-stat"><div class="num">${brandResults.length}</div><div class="label">брендов</div></div>
-                <div class="summary-stat"><div class="num">${totalEvents}</div><div class="label">событий</div></div>
-                <div class="summary-stat"><div class="num" style="color:#22c55e">${pos}</div><div class="label">позитивных</div></div>
-                <div class="summary-stat"><div class="num" style="color:#ef4444">${neg}</div><div class="label">негативных</div></div>
+                <div class="summary-stat"><div class="num">${totalEvents}</div><div class="label">событий найдено</div></div>
             </div>
         `;
 
@@ -485,13 +480,11 @@
         container.insertAdjacentHTML('beforeend', `
             <div class="toolbar" id="toolbar">
                 <label>Фильтры:</label>
-                <div class="filter-group" id="filterSent"></div>
                 <div class="filter-group" id="filterCat"></div>
                 <label style="margin-left:auto">Сортировка:</label>
                 <select onchange="setSort(this.value)" id="sortSelect">
                     <option value="date">По дате</option>
                     <option value="category">По категории</option>
-                    <option value="sentiment">По тональности</option>
                 </select>
             </div>
         `);
@@ -511,12 +504,7 @@
     }
 
     function renderFilterChips() {
-        const sentWrap = document.getElementById('filterSent');
         const catWrap = document.getElementById('filterCat');
-        sentWrap.innerHTML = ['positive','negative','neutral'].map(s =>
-            `<label class="chip chip-${s} ${filters.sentiments.has(s)?'':'off'}" onclick="toggleFilter('sent','${s}')">
-                ${sentLabels[s]}</label>`
-        ).join('');
         catWrap.innerHTML = Object.keys(catLabels).map(c =>
             `<label class="chip chip-${c} ${filters.categories.has(c)?'':'off'}" onclick="toggleFilter('cat','${c}')">
                 ${catLabels[c]}</label>`
@@ -548,7 +536,6 @@
                         <p class="event-description">${esc(ev.description)}</p>
                         <div class="event-meta">
                             <span class="event-badge cat-${cat}">${esc(catLabels[cat]||cat)}</span>
-                            <span class="event-badge sent-${sent}">${esc(sentLabels[sent]||sent)}</span>
                             <span class="event-source"><a href="${esc(ev.source_url)}" target="_blank" rel="noopener">${esc(ev.source_title||'Источник')}</a></span>
                         </div>
                     </div>
@@ -574,8 +561,8 @@
         let dots = '';
         events.forEach((ev, i) => {
             const pos = ((new Date(ev.event_date) - new Date(minDate)) / range) * 100;
-            const sent = ev.sentiment || 'neutral';
-            dots += `<div class="timeline-event ${sent}" style="position:absolute;left:calc(${pos}% - 7px)"
+            const cat = ev.impact_category || 'other';
+            dots += `<div class="timeline-event ${cat}" style="position:absolute;left:calc(${pos}% - 7px)"
                 data-tip="${esc(ev.event_date)}: ${esc(ev.event_name)}"
                 onmouseenter="showTip(event,this)" onmouseleave="hideTip()"></div>`;
         });
