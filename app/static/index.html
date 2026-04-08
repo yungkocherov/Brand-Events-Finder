@@ -262,6 +262,22 @@
             display: none; font-size: 0.88rem;
         }
         .error.active { display: block; }
+        .event-types-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 8px; margin-bottom: 4px;
+        }
+        .et-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px;
+            cursor: pointer; transition: all 0.15s; user-select: none; font-size: 0.88rem;
+        }
+        .et-item:hover { border-color: #818cf8; background: #f5f3ff; }
+        .et-item.checked { border-color: #818cf8; background: #eef2ff; }
+        .et-item input { accent-color: #4f46e5; cursor: pointer; width: 16px; height: 16px; }
+        .et-actions { margin-top: 6px; display: flex; gap: 8px; }
+        .et-link { font-size: 0.8rem; color: #4f46e5; cursor: pointer; text-decoration: none; }
+        .et-link:hover { text-decoration: underline; }
+
         .hidden { display: none !important; }
     </style>
 </head>
@@ -290,6 +306,11 @@
             <label for="brands">Бренды</label>
             <p class="hint">Через запятую: Сбер, Альфастрахование, Добрый, Exeed</p>
             <textarea id="brands" placeholder="Сбер, Альфастрахование, Добрый"></textarea>
+
+            <label style="margin-top:16px">Типы событий</label>
+            <p class="hint">Выберите, какие события искать. Чем меньше — тем быстрее и точнее.</p>
+            <div class="event-types-grid" id="eventTypesGrid"></div>
+
             <div class="controls-row">
                 <div class="field"><label>Год с</label><select id="yearFrom"></select></div>
                 <div class="field"><label>Год по</label><select id="yearTo"></select></div>
@@ -310,22 +331,59 @@
     <script>
     let lastResults = null;
     let activeTab = 0;
-    let filters = { categories: new Set(['revenue','awareness','reputation','operations','legal','other']) };
+    let filters = { categories: new Set() };
     let sortBy = 'date';
     let excluded = new Set();
 
-    const catLabels = { revenue:'Выручка', awareness:'Узнаваемость', reputation:'Репутация',
-                        operations:'Операции', legal:'Юридическое', other:'Другое' };
-    const sentLabels = { positive:'Позитивное', negative:'Негативное', neutral:'Нейтральное' };
+    function getCatLabel(key) { return eventTypesData[key] || key; }
+
+    let eventTypesData = {};
 
     // --- Init ---
-    (function init() {
+    (async function init() {
         const cur = new Date().getFullYear();
         const f = document.getElementById('yearFrom'), t = document.getElementById('yearTo');
         for (let y = cur; y >= 2015; y--) { f.add(new Option(y,y)); t.add(new Option(y,y)); }
         f.value = cur - 3; t.value = cur;
         renderHistory();
+
+        try {
+            const resp = await fetch('/api/event-types');
+            eventTypesData = await resp.json();
+            renderEventTypes();
+        } catch (e) { console.error('Failed to load event types', e); }
     })();
+
+    function renderEventTypes() {
+        const grid = document.getElementById('eventTypesGrid');
+        const keys = Object.keys(eventTypesData);
+        grid.innerHTML = keys.map(k =>
+            `<label class="et-item checked" id="et-${k}" onclick="toggleET('${k}')">
+                <input type="checkbox" checked data-et="${k}"> ${esc(eventTypesData[k])}
+            </label>`
+        ).join('') + `
+            <div class="et-actions" style="grid-column:1/-1">
+                <span class="et-link" onclick="setAllET(true)">Выбрать все</span>
+                <span class="et-link" onclick="setAllET(false)">Снять все</span>
+            </div>`;
+    }
+
+    function toggleET(key) {
+        const cb = document.querySelector(`[data-et="${key}"]`);
+        cb.checked = !cb.checked;
+        document.getElementById(`et-${key}`).classList.toggle('checked', cb.checked);
+    }
+
+    function setAllET(val) {
+        document.querySelectorAll('[data-et]').forEach(cb => {
+            cb.checked = val;
+            document.getElementById(`et-${cb.dataset.et}`).classList.toggle('checked', val);
+        });
+    }
+
+    function getSelectedET() {
+        return [...document.querySelectorAll('[data-et]:checked')].map(cb => cb.dataset.et);
+    }
 
     // --- History ---
     function getHistory() {
@@ -370,6 +428,9 @@
         if (!brands.length) return;
         const yearFrom = +document.getElementById('yearFrom').value;
         const yearTo = +document.getElementById('yearTo').value;
+        const eventTypes = getSelectedET();
+        if (!eventTypes.length) { alert('Выберите хотя бы один тип событий'); return; }
+
         const btn = document.getElementById('searchBtn');
         const loading = document.getElementById('loading');
         const results = document.getElementById('results');
@@ -382,13 +443,13 @@
         try {
             const resp = await fetch('/api/search', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ brands, year_from: yearFrom, year_to: yearTo }),
+                body: JSON.stringify({ brands, event_types: eventTypes, year_from: yearFrom, year_to: yearTo }),
             });
             if (!resp.ok) throw new Error(await resp.text());
             const data = await resp.json();
             lastResults = data.results;
             activeTab = 0; excluded = new Set();
-            filters.categories = new Set(['revenue','awareness','reputation','operations','legal','other']);
+            filters.categories = new Set(eventTypes);
             sortBy = 'date';
             saveToHistory(brands, yearFrom, yearTo);
             renderResults(data.results);
@@ -505,9 +566,13 @@
 
     function renderFilterChips() {
         const catWrap = document.getElementById('filterCat');
-        catWrap.innerHTML = Object.keys(catLabels).map(c =>
-            `<label class="chip chip-${c} ${filters.categories.has(c)?'':'off'}" onclick="toggleFilter('cat','${c}')">
-                ${catLabels[c]}</label>`
+        catWrap.innerHTML = [...filters.categories].concat(
+            [...new Set(lastResults?.flatMap(b => b.events.map(e => e.impact_category)) || [])]
+        ).filter((v,i,a) => a.indexOf(v)===i).map(c =>
+            `<label class="chip ${filters.categories.has(c)?'':'off'}"
+                    style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe"
+                    onclick="toggleFilter('cat','${c}')">
+                ${esc(getCatLabel(c))}</label>`
         ).join('');
     }
 
@@ -535,7 +600,7 @@
                         </div>
                         <p class="event-description">${esc(ev.description)}</p>
                         <div class="event-meta">
-                            <span class="event-badge cat-${cat}">${esc(catLabels[cat]||cat)}</span>
+                            <span class="event-badge cat-${cat}">${esc(getCatLabel(cat))}</span>
                             <span class="event-source"><a href="${esc(ev.source_url)}" target="_blank" rel="noopener">${esc(ev.source_title||'Источник')}</a></span>
                         </div>
                     </div>
