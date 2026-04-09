@@ -97,7 +97,7 @@ def _search_ddg(
     queries = []
     for group_key, group in QUERY_GROUPS.items():
         if any(et in event_types for et in group["types"]):
-            query = f"{brand} {group['keywords']}{industry_suffix}"
+            query = f'"{brand}" {group["keywords"]}{industry_suffix}'
             queries.append((query, group_key))
 
     with DDGS() as ddgs:
@@ -221,10 +221,12 @@ async def search_brand_events(
         return BrandEventsResponse(brand=brand, events=[])
 
     # Step 2: filter with Mistral (if API key provided)
+    # Limit input to ~30 results to avoid overloading Mistral context
+    mistral_input = search_results[:30]
     if api_key:
         try:
             ai_response = await loop.run_in_executor(
-                None, partial(_analyze_with_mistral, api_key, brand, search_results, industry)
+                None, partial(_analyze_with_mistral, api_key, brand, mistral_input, industry)
             )
             events = _parse_events(ai_response, brand)
         except Exception as e:
