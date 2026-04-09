@@ -578,6 +578,7 @@
         results.classList.remove('active'); error.classList.remove('active');
         results.innerHTML = '';
         startLoadingAnimation();
+        document.getElementById('loading').scrollIntoView({ behavior: 'smooth', block: 'center' });
 
         try {
             const resp = await fetch('/api/search', {
@@ -749,6 +750,7 @@
                         <p class="event-description">${esc(ev.description)}</p>
                         <div class="event-meta">
                             <span class="event-badge cat-${cat}">${esc(getCatLabel(cat))}</span>
+                            ${sent !== 'neutral' ? `<span class="event-badge sent-${sent}">${sent === 'positive' ? 'Позитивное' : 'Негативное'}</span>` : ''}
                             <span class="event-source"><a href="${esc(ev.source_url)}" target="_blank" rel="noopener">${esc(ev.source_title||'Источник')}</a></span>
                         </div>
                     </div>
@@ -812,8 +814,12 @@
         if (!wrap.classList.contains('hidden')) { wrap.classList.add('hidden'); return; }
         const results = getIncludedResults();
         const allEvents = [];
+        const seenCols = new Set();
         results.forEach(br => br.events.forEach(ev => {
-            allEvents.push({ col: `${ev.brand} | ${ev.event_name}`, date: ev.event_date });
+            const col = `${ev.brand}__${toSnakeCase(ev.event_name)}`;
+            if (seenCols.has(col)) return;
+            seenCols.add(col);
+            allEvents.push({ col, date: ev.event_date });
         }));
         if (!allEvents.length) { wrap.innerHTML = '<p style="padding:10px;color:#94a3b8">Нет выбранных событий</p>'; wrap.classList.remove('hidden'); return; }
 
@@ -868,6 +874,11 @@
             const a = document.createElement('a'); a.href = url; a.download = 'brand_events.csv'; a.click();
             URL.revokeObjectURL(url);
         } catch (e) { alert(e.message); }
+    }
+
+    const _TR = {"а":"a","б":"b","в":"v","г":"g","д":"d","е":"e","ё":"e","ж":"zh","з":"z","и":"i","й":"y","к":"k","л":"l","м":"m","н":"n","о":"o","п":"p","р":"r","с":"s","т":"t","у":"u","ф":"f","х":"h","ц":"ts","ч":"ch","ш":"sh","щ":"sch","ъ":"","ы":"y","ь":"","э":"e","ю":"yu","я":"ya"};
+    function toSnakeCase(s) {
+        return s.toLowerCase().split('').map(c => _TR[c] || (/[a-z0-9]/.test(c) ? c : '_')).join('').replace(/_+/g,'_').replace(/^_|_$/g,'').slice(0,60);
     }
 
     function esc(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }

@@ -81,10 +81,17 @@ async def export_csv(request: CsvRequest):
             current += timedelta(days=1)
 
     all_events: list[tuple[str, str, date | None]] = []
+    seen_cols = set()
     for brand_result in request.results:
         for ev in brand_result.events:
             event_date = _parse_date(ev.event_date)
-            col_name = f"{ev.brand} | {ev.event_name}"
+            # Format: brand__event_name_snake_case
+            snake_name = _to_snake_case(ev.event_name)
+            col_name = f"{ev.brand}__{snake_name}"
+            # Deduplicate column names
+            if col_name in seen_cols:
+                continue
+            seen_cols.add(col_name)
             all_events.append((col_name, ev.event_date, event_date))
 
     output = io.StringIO()
@@ -108,6 +115,30 @@ async def export_csv(request: CsvRequest):
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=brand_events.csv"},
     )
+
+
+_TRANSLIT = {
+    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e",
+    "ж": "zh", "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m",
+    "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
+    "ф": "f", "х": "h", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "sch",
+    "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
+}
+
+
+def _to_snake_case(text: str) -> str:
+    """Convert text to snake_case ASCII: 'Запуск нового продукта' -> 'zapusk_novogo_produkta'."""
+    result = []
+    for ch in text.lower():
+        if ch in _TRANSLIT:
+            result.append(_TRANSLIT[ch])
+        elif ch.isascii() and ch.isalnum():
+            result.append(ch)
+        else:
+            result.append("_")
+    text = "".join(result)
+    text = re.sub(r"_+", "_", text)
+    return text.strip("_")[:60]
 
 
 def _parse_date(date_str: str) -> date | None:
