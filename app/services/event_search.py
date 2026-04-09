@@ -103,7 +103,7 @@ def _search_ddg(
     with DDGS() as ddgs:
         for query, group_key in queries:
             try:
-                results = list(ddgs.text(query, max_results=15, region="ru-ru"))
+                results = list(ddgs.text(query, max_results=25, region="ru-ru"))
             except Exception as e:
                 logger.error(f"DDG search failed: {e}")
                 results = []
@@ -151,7 +151,7 @@ def _analyze_with_mistral(
             {"role": "system", "content": prompt},
             {"role": "user", "content": search_text},
         ],
-        temperature=0.2,
+        temperature=0,
         max_tokens=8000,
     )
 
