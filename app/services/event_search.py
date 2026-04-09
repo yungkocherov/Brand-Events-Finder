@@ -245,6 +245,9 @@ async def search_brand_events(
                 None, partial(_analyze_with_mistral, api_key, brand, mistral_input, industry, model)
             )
             events = _parse_events(ai_response, brand)
+            if not events:
+                logger.warning(f"Mistral returned 0 events for '{brand}', falling back to raw")
+                events = _raw_to_events(brand, search_results)
         except Exception as e:
             logger.error(f"Mistral failed for '{brand}': {e}")
             events = _raw_to_events(brand, search_results)
