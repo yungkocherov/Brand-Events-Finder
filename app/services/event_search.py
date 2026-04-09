@@ -13,38 +13,57 @@ from app.models import BrandEvent, BrandEventsResponse
 logger = logging.getLogger(__name__)
 
 EVENT_TYPES = {
-    "market_exit": {"label": "Уход / приход на рынок"},
-    "rebrand": {"label": "Ребрендинг / смена названия"},
-    "new_product": {"label": "Запуск нового продукта"},
-    "supply": {"label": "Перебои с поставками / дефицит"},
-    "ad_campaign": {"label": "Крупная рекламная кампания"},
-    "scandal": {"label": "Крупный скандал / суд"},
-    "sanctions": {"label": "Санкции / ограничения"},
-    "price_change": {"label": "Изменение цен"},
-    "management": {"label": "Смена собственника / руководства"},
-    "merger": {"label": "Слияние / поглощение"},
-    "pharma_registration": {"label": "Регистрация / отзыв препарата"},
-    "pharma_clinical": {"label": "Клинические исследования"},
-    "pharma_safety": {"label": "Безопасность / побочные эффекты"},
-}
-
-# Event types grouped into combined search queries (fewer requests to DDG)
-QUERY_GROUPS = {
-    "business": {
-        "types": ["market_exit", "rebrand", "sanctions", "merger", "management"],
-        "keywords": "уход закрытие ребрендинг санкции слияние поглощение смена руководства",
+    "market_exit": {
+        "label": "Уход / приход на рынок",
+        "keywords": "уход с рынка закрытие выход приход",
     },
-    "product": {
-        "types": ["new_product", "supply", "price_change", "ad_campaign"],
-        "keywords": "запуск продукт дефицит поставки цены рекламная кампания",
+    "rebrand": {
+        "label": "Ребрендинг / смена названия",
+        "keywords": "ребрендинг смена названия логотип",
     },
-    "legal": {
-        "types": ["scandal"],
+    "new_product": {
+        "label": "Запуск нового продукта",
+        "keywords": "запуск новый продукт релиз линейка",
+    },
+    "supply": {
+        "label": "Перебои с поставками / дефицит",
+        "keywords": "дефицит перебои поставки нехватка",
+    },
+    "ad_campaign": {
+        "label": "Крупная рекламная кампания",
+        "keywords": "рекламная кампания спонсорство амбассадор",
+    },
+    "scandal": {
+        "label": "Крупный скандал / суд",
         "keywords": "скандал суд штраф иск",
     },
-    "pharma": {
-        "types": ["pharma_registration", "pharma_clinical", "pharma_safety"],
-        "keywords": "регистрация препарат клинические исследования побочные эффекты Росздравнадзор",
+    "sanctions": {
+        "label": "Санкции / ограничения",
+        "keywords": "санкции ограничения запрет блокировка",
+    },
+    "price_change": {
+        "label": "Изменение цен",
+        "keywords": "повышение цен подорожание скидки",
+    },
+    "management": {
+        "label": "Смена собственника / руководства",
+        "keywords": "смена CEO директор руководство назначение",
+    },
+    "merger": {
+        "label": "Слияние / поглощение",
+        "keywords": "слияние поглощение покупка сделка",
+    },
+    "pharma_registration": {
+        "label": "Регистрация / отзыв препарата",
+        "keywords": "регистрация отзыв препарат Минздрав",
+    },
+    "pharma_clinical": {
+        "label": "Клинические исследования",
+        "keywords": "клинические исследования испытания эффективность",
+    },
+    "pharma_safety": {
+        "label": "Безопасность / побочные эффекты",
+        "keywords": "побочные эффекты безопасность отзыв партии Росздравнадзор",
     },
 }
 
@@ -88,22 +107,19 @@ SYSTEM_PROMPT = """\
 def _search_ddg(
     brand: str, event_types: list[str], industry: str = "",
 ) -> list[dict]:
-    """Search DuckDuckGo with combined queries — few requests, more results each."""
+    """Search DuckDuckGo with one query per event type."""
     all_results = []
     seen_urls = set()
     industry_suffix = f" {industry}" if industry else ""
 
-    # Determine which query groups to use based on selected event types
-    queries = []
-    for group_key, group in QUERY_GROUPS.items():
-        if any(et in event_types for et in group["types"]):
-            query = f'"{brand}" {group["keywords"]}{industry_suffix}'
-            queries.append((query, group_key))
-
     with DDGS() as ddgs:
-        for query, group_key in queries:
+        for et in event_types:
+            cfg = EVENT_TYPES.get(et)
+            if not cfg:
+                continue
+            query = f'"{brand}" {cfg["keywords"]}{industry_suffix}'
             try:
-                results = list(ddgs.text(query, max_results=25, region="ru-ru"))
+                results = list(ddgs.text(query, max_results=10, region="ru-ru"))
             except Exception as e:
                 logger.error(f"DDG search failed: {e}")
                 results = []
@@ -117,10 +133,10 @@ def _search_ddg(
                     "title": r.get("title", "").strip(),
                     "href": url,
                     "body": r.get("body", "").strip(),
-                    "category": group_key,
+                    "category": et,
                 })
 
-            logger.info(f"DDG: {len(results)} results for '{brand}' group '{group_key}'")
+            logger.info(f"DDG: {len(results)} results for '{brand}' [{et}]")
             time.sleep(0.5)
 
     return all_results
