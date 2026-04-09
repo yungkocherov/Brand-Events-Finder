@@ -461,7 +461,11 @@
                 status.style.color = '#22c55e';
                 localStorage.setItem('mistralApiKey', key);
             } else {
-                status.textContent = 'Неверный ключ';
+                const err = data.error || '';
+                if (err.includes('401')) status.textContent = 'Неверный ключ';
+                else if (err.includes('429')) status.textContent = 'Лимит — подождите';
+                else if (err.includes('503')) status.textContent = 'Mistral недоступен';
+                else status.textContent = 'Ошибка';
                 status.style.color = '#ef4444';
             }
         } catch {
