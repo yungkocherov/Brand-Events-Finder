@@ -54,7 +54,7 @@ async def check_key(request: CheckKeyRequest):
 @app.post("/api/search", response_model=SearchResponse)
 async def search_events(request: BrandRequest):
     tasks = [
-        search_brand_events(brand, request.event_types, request.year_from, request.year_to, request.api_key, request.industry, request.model)
+        search_brand_events(brand, request.event_types, request.api_key, request.industry, request.model)
         for brand in request.brands
     ]
     results = await asyncio.gather(*tasks)
@@ -79,9 +79,9 @@ async def export_csv(request: CsvRequest):
                 month = 1
                 year += 1
             try:
-                current = current.replace(year=year, month=month)
+                current = current.replace(year=year, month=month, day=1)
             except ValueError:
-                current = current.replace(year=year, month=month, day=28)
+                current = current.replace(year=year, month=month, day=1)
         else:
             current += timedelta(days=1)
 

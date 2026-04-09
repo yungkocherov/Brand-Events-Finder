@@ -204,7 +204,7 @@ def _parse_events(text: str, brand: str) -> list[BrandEvent]:
                 event_date=item.get("event_date", ""),
                 description=item.get("description", ""),
                 impact_category=item.get("impact_category", "other"),
-                sentiment="neutral",
+                sentiment=item.get("sentiment", "neutral"),
                 source_url=item.get("source_url", ""),
                 source_title=item.get("source_title", ""),
             ))
@@ -217,8 +217,6 @@ def _parse_events(text: str, brand: str) -> list[BrandEvent]:
 async def search_brand_events(
     brand: str,
     event_types: list[str] | None = None,
-    year_from: int = 2022,
-    year_to: int = 2025,
     api_key: str = "",
     industry: str = "",
     model: str = "open-mistral-nemo",
@@ -227,7 +225,7 @@ async def search_brand_events(
         event_types = list(EVENT_TYPES.keys())
 
     loop = asyncio.get_event_loop()
-    logger.info(f"Searching '{brand}' ({year_from}-{year_to}), industry='{industry}', types: {event_types}")
+    logger.info(f"Searching '{brand}', industry='{industry}', types: {event_types}")
 
     # Step 1: DDG search
     search_results = await loop.run_in_executor(

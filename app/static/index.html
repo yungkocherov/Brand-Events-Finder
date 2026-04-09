@@ -319,7 +319,7 @@
         </div>
 
         <div class="about">
-            <p><strong>Как это работает:</strong> вы вводите названия брендов и выбираете временной диапазон.
+            <p><strong>Как это работает:</strong> вы вводите названия брендов, указываете отрасль и выбираете типы событий.
             Сервис ищет в новостных источниках события, которые могли повлиять на бизнес-метрики:
             выручку, узнаваемость, репутацию, операционную деятельность.</p>
             <p>AI-агент (Mistral) фильтрует результаты и оставляет только релевантные события.
@@ -367,8 +367,6 @@
             <p class="field-error-text" id="eventTypesError">Выберите хотя бы один тип</p>
 
             <div class="controls-row">
-                <div class="field"><label>Год с</label><select id="yearFrom"></select></div>
-                <div class="field"><label>Год по</label><select id="yearTo"></select></div>
                 <button class="btn btn-primary" id="searchBtn" onclick="startSearch()">Найти события</button>
             </div>
         </div>
@@ -403,10 +401,6 @@
 
     // --- Init ---
     (async function init() {
-        const cur = new Date().getFullYear();
-        const f = document.getElementById('yearFrom'), t = document.getElementById('yearTo');
-        for (let y = cur; y >= 2015; y--) { f.add(new Option(y,y)); t.add(new Option(y,y)); }
-        f.value = cur - 3; t.value = cur;
         renderHistory();
 
         // Restore API key from localStorage
@@ -500,11 +494,11 @@
     function getHistory() {
         try { return JSON.parse(localStorage.getItem('brandSearchHistory') || '[]'); } catch { return []; }
     }
-    function saveToHistory(brands, yearFrom, yearTo) {
+    function saveToHistory(brands) {
         let h = getHistory();
-        const key = `${brands.join(', ')} (${yearFrom}-${yearTo})`;
+        const key = brands.join(', ');
         h = h.filter(x => x.key !== key);
-        h.unshift({ key, brands, yearFrom, yearTo, ts: Date.now() });
+        h.unshift({ key, brands, ts: Date.now() });
         if (h.length > 10) h = h.slice(0, 10);
         localStorage.setItem('brandSearchHistory', JSON.stringify(h));
         renderHistory();
@@ -517,8 +511,7 @@
     function loadHistory(idx) {
         const h = getHistory()[idx]; if (!h) return;
         document.getElementById('brands').value = h.brands.join(', ');
-        document.getElementById('yearFrom').value = h.yearFrom;
-        document.getElementById('yearTo').value = h.yearTo;
+        // Restore brands only
     }
     function renderHistory() {
         const h = getHistory(), sec = document.getElementById('historySection'),
@@ -568,9 +561,6 @@
 
         if (hasError) return;
 
-        const yearFrom = +document.getElementById('yearFrom').value;
-        const yearTo = +document.getElementById('yearTo').value;
-
         const btn = document.getElementById('searchBtn');
         const loading = document.getElementById('loading');
         const results = document.getElementById('results');
@@ -603,7 +593,7 @@
             try {
                 const resp = await fetch('/api/search', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ brands: [brand], industry, event_types: eventTypes, year_from: yearFrom, year_to: yearTo, api_key: apiKey, model }),
+                    body: JSON.stringify({ brands: [brand], industry, event_types: eventTypes, api_key: apiKey, model }),
                 });
                 if (!resp.ok) throw new Error(await resp.text());
                 const data = await resp.json();
@@ -632,7 +622,7 @@
             allResults.forEach(b => b.events.forEach(e => allCats.add(e.impact_category || 'other')));
             filters.categories = allCats;
             sortBy = 'date';
-            saveToHistory(brands, yearFrom, yearTo);
+            saveToHistory(brands);
             renderResults(allResults);
         }
 
@@ -688,8 +678,8 @@
         csvDiv.innerHTML = `
             <h3>Экспорт в CSV (dummy-переменные)</h3>
             <div class="csv-row">
-                <div class="field"><label>Начало</label><input type="date" id="csvStart" value="${document.getElementById('yearFrom').value}-01-01"></div>
-                <div class="field"><label>Конец</label><input type="date" id="csvEnd" value="${document.getElementById('yearTo').value}-12-31"></div>
+                <div class="field"><label>Начало</label><input type="date" id="csvStart" value="2020-01-01"></div>
+                <div class="field"><label>Конец</label><input type="date" id="csvEnd" value="${new Date().getFullYear()}-12-31"></div>
                 <div class="field"><label>Частота</label>
                     <select id="csvFreq"><option value="D">День</option><option value="W">Неделя</option><option value="M" selected>Месяц</option></select>
                 </div>

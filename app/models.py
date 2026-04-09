@@ -6,8 +6,6 @@ class BrandRequest(BaseModel):
     brands: list[str]
     industry: str = ""
     event_types: list[str] = []
-    year_from: int = 2022
-    year_to: int = 2025
     api_key: str = ""
     model: str = "open-mistral-nemo"
 
