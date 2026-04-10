@@ -82,7 +82,7 @@ SYSTEM_PROMPT = """\
 
 Для каждого оставшегося события укажи:
 - event_name: краткое название события
-- event_date: дата в формате YYYY-MM-DD. Используй [дата публикации: ...] если она есть в источнике. Если её нет — оставь пустую строку. НЕ ВЫДУМЫВАЙ даты!
+- event_date: ТОЛЬКО дата в формате YYYY-MM-DD (например "2024-03-15"). БЕЗ скобок, БЕЗ слов "дата публикации". Если есть [дата публикации: X] в источнике — извлеки оттуда X. Если даты нет — оставь "". НЕ ВЫДУМЫВАЙ даты!
 - description: 1-2 предложения
 - impact_category: СТРОГО одно из: market_exit, rebrand, new_product, supply, ad_campaign, scandal, sanctions, price_change, management, merger, pharma_registration, pharma_clinical, pharma_safety (или custom_N если событие связано с пользовательской темой)
 - impact_score: ЦЕЛОЕ число от 1 до 5, насколько событие повлияло на бизнес-метрики бренда (выручку, продажи, узнаваемость). 1=минимальное влияние, 5=критическое (уход с рынка, крупный скандал, ребрендинг)
@@ -181,14 +181,16 @@ def _analyze_with_mistral(
     industry_note = f" (отрасль: {industry})" if industry else ""
 
     # Build extended category list including custom ones
-    custom_cats = ", ".join(f"custom_{i}" for i in range(len(custom_queries)))
     custom_note = ""
     if custom_queries:
         custom_list = ", ".join(f'custom_{i}={q!r}' for i, q in enumerate(custom_queries))
         custom_note = (
-            f"\n\nДОПОЛНИТЕЛЬНО: используй категории {custom_cats} для событий, "
-            f"связанных с темами: {custom_list}. "
-            f"События по этим темам ОБЯЗАТЕЛЬНО включи в результат."
+            f"\n\nКАСТОМНЫЕ КАТЕГОРИИ: {custom_list}\n"
+            f"ВАЖНО: Каждый результат поиска показан с [категорией] в начале. "
+            f"Если у результата в скобках указана пользовательская тема "
+            f"(например [Невыплаты]), ты ОБЯЗАН использовать соответствующий "
+            f"custom_N как impact_category, а не стандартную категорию. "
+            f"СОХРАНЯЙ категорию из входных данных, не пытайся переклассифицировать!"
         )
 
     prompt = SYSTEM_PROMPT.format(brand=brand, industry_note=industry_note) + custom_note
@@ -229,10 +231,14 @@ def _parse_events(text: str, brand: str) -> list[BrandEvent]:
     events = []
     for item in data:
         try:
+            # Extract clean YYYY-MM-DD from date field (Mistral sometimes wraps it)
+            raw_date = str(item.get("event_date", ""))
+            date_match = re.search(r"(\d{4})-(\d{2})-(\d{2})", raw_date)
+            clean_date = date_match.group(0) if date_match else ""
             events.append(BrandEvent(
                 brand=brand,
                 event_name=item.get("event_name", ""),
-                event_date=item.get("event_date", ""),
+                event_date=clean_date,
                 description=item.get("description", ""),
                 impact_category=item.get("impact_category", "other"),
                 impact_score=int(item.get("impact_score", 3)) if str(item.get("impact_score", "")).isdigit() else 3,
@@ -295,6 +301,15 @@ async def search_brand_events(
             events = _raw_to_events(brand, search_results)
     else:
         events = _raw_to_events(brand, search_results)
+
+    # Override impact_category from source URL — preserve original search category
+    # Mistral sometimes reclassifies events to "better fitting" standard categories,
+    # but we want to keep the category that was used to find the article.
+    url_to_category = {r["href"]: r["category"] for r in search_results}
+    for ev in events:
+        src_cat = url_to_category.get(ev.source_url)
+        if src_cat:
+            ev.impact_category = src_cat
 
     events.sort(key=lambda e: (-e.impact_score, e.event_date))
     logger.info(f"Brand '{brand}': {len(events)} events after filtering")
