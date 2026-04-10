@@ -371,11 +371,6 @@
             <label style="margin-top:16px">Типы событий</label>
             <p class="hint">Выберите, какие события искать. Чем меньше — тем быстрее и точнее.</p>
             <div class="event-types-grid" id="eventTypesGrid" style="border-radius:10px;padding:2px"></div>
-            <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
-                <input type="text" id="customEventType" placeholder="Свой тип: например, отзыв лицензии"
-                       style="flex:1;padding:8px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:0.88rem;font-family:inherit">
-                <button class="btn btn-outline btn-sm" onclick="addCustomET()">Добавить</button>
-            </div>
             <p class="field-error-text" id="eventTypesError">Выберите хотя бы один тип</p>
 
             <div class="controls-row">
@@ -410,6 +405,7 @@
     function getCatLabel(key) { return eventTypesData[key] || key; }
 
     let eventTypesData = {};
+    let checkedStandardET = new Set();
 
     // --- Init ---
     (async function init() {
@@ -429,21 +425,44 @@
     function renderEventTypes() {
         const grid = document.getElementById('eventTypesGrid');
         const keys = Object.keys(eventTypesData);
-        grid.innerHTML = keys.map(k =>
+        const standardCards = keys.map(k =>
             `<label class="et-item" id="et-${k}" onclick="toggleET('${k}')">
                 <input type="checkbox" data-et="${k}"> ${esc(eventTypesData[k])}
             </label>`
-        ).join('') + `
+        ).join('');
+        const customCards = customQueries.map((q, i) =>
+            `<label class="et-item checked" id="cq-${i}">
+                <input type="checkbox" data-cq="${i}" checked>
+                <span style="flex:1">${esc(q)}</span>
+                <span style="cursor:pointer;color:#94a3b8;font-weight:700;padding:0 4px" onclick="event.stopPropagation();removeCustomET(${i})">×</span>
+            </label>`
+        ).join('');
+        const customInput = `
+            <label class="et-item" style="cursor:default" onclick="event.stopPropagation()">
+                <span style="color:#818cf8;font-weight:700;font-size:1.1rem">+</span>
+                <input type="text" id="customEventType" placeholder="Свой тип..."
+                       onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomET()}"
+                       style="flex:1;border:none;outline:none;background:transparent;font-size:0.88rem;font-family:inherit;padding:0">
+            </label>`;
+        grid.innerHTML = standardCards + customCards + customInput + `
             <div class="et-actions" style="grid-column:1/-1">
                 <span class="et-link" onclick="setAllET(true)">Выбрать все</span>
                 <span class="et-link" onclick="setAllET(false)">Снять все</span>
             </div>`;
+        // Restore checked state for standard items
+        document.querySelectorAll('[data-et]').forEach(cb => {
+            const checked = checkedStandardET.has(cb.dataset.et);
+            cb.checked = checked;
+            document.getElementById(`et-${cb.dataset.et}`).classList.toggle('checked', checked);
+        });
     }
 
     function toggleET(key) {
         const cb = document.querySelector(`[data-et="${key}"]`);
         cb.checked = !cb.checked;
         document.getElementById(`et-${key}`).classList.toggle('checked', cb.checked);
+        if (cb.checked) checkedStandardET.add(key);
+        else checkedStandardET.delete(key);
     }
 
     async function checkApiKey() {
@@ -495,6 +514,8 @@
         document.querySelectorAll('[data-et]').forEach(cb => {
             cb.checked = val;
             document.getElementById(`et-${cb.dataset.et}`).classList.toggle('checked', val);
+            if (val) checkedStandardET.add(cb.dataset.et);
+            else checkedStandardET.delete(cb.dataset.et);
         });
     }
 
@@ -509,29 +530,13 @@
         const val = input.value.trim();
         if (!val) return;
         customQueries.push(val);
-        input.value = '';
-        renderCustomQueries();
+        renderEventTypes();
+        document.getElementById('customEventType').focus();
     }
 
     function removeCustomET(idx) {
         customQueries.splice(idx, 1);
-        renderCustomQueries();
-    }
-
-    function renderCustomQueries() {
-        let wrap = document.getElementById('customQueriesList');
-        if (!wrap) {
-            wrap = document.createElement('div');
-            wrap.id = 'customQueriesList';
-            wrap.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:6px';
-            document.getElementById('customEventType').parentElement.after(wrap);
-        }
-        wrap.innerHTML = customQueries.map((q, i) =>
-            `<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:6px;font-size:0.82rem;color:#4338ca">
-                ${esc(q)}
-                <span style="cursor:pointer;color:#94a3b8;font-weight:700" onclick="removeCustomET(${i})">x</span>
-            </span>`
-        ).join('');
+        renderEventTypes();
     }
 
     function getCustomQueries() { return [...customQueries]; }
