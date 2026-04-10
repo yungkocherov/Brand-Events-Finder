@@ -356,52 +356,54 @@ def _domain(url: str) -> str:
 
 
 async def _fetch_article_date(client: httpx.AsyncClient, url: str) -> str:
-    """Fetch article HTML and extract publication date."""
+    """Fetch article HTML and extract publication date.
+
+    Priority: URL date > <head> meta/JSON-LD > first <time> tag in article.
+    Avoids matching sidebar/comment dates by limiting HTML scan area.
+    """
+    # 1. URL date is most reliable when present
+    url_date = _date_from_url(url)
+    if url_date:
+        return url_date
+
     try:
         resp = await client.get(url, timeout=3, follow_redirects=True,
                                 headers={"User-Agent": "Mozilla/5.0"})
         if resp.status_code != 200:
             return ""
-        html = resp.text[:50000]  # first 50KB
+        html = resp.text
     except Exception:
         return ""
 
-    # 1. JSON-LD datePublished
-    m = re.search(r'"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})', html)
+    # Extract <head> for meta tags only
+    head_end = html.lower().find("</head>")
+    head = html[:head_end] if head_end > 0 else html[:15000]
+
+    # 2. JSON-LD datePublished (in <head> or early body)
+    early = html[:20000]
+    m = re.search(r'"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})', early)
     if m:
         return m.group(1)
 
-    # 2. <meta property="article:published_time" content="2025-12-23...">
+    # 3. meta tags in <head>
     m = re.search(
-        r'<meta[^>]+(?:property|name)=["\'](?:article:published_time|pubdate|publishdate|date)["\'][^>]+content=["\']([^"\']+)',
-        html, re.IGNORECASE,
+        r'<meta[^>]+(?:property|name)=["\'](?:article:published_time|pubdate|publishdate|date|dc\.date)["\'][^>]+content=["\']([^"\']+)',
+        head, re.IGNORECASE,
     )
     if not m:
         m = re.search(
-            r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+(?:property|name)=["\'](?:article:published_time|pubdate|publishdate|date)["\']',
-            html, re.IGNORECASE,
+            r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+(?:property|name)=["\'](?:article:published_time|pubdate|publishdate|date|dc\.date)["\']',
+            head, re.IGNORECASE,
         )
     if m:
-        date_str = m.group(1)
-        d = re.search(r"(\d{4})-(\d{2})-(\d{2})", date_str)
+        d = re.search(r"(\d{4})-(\d{2})-(\d{2})", m.group(1))
         if d:
             return d.group(0)
 
-    # 3. <time datetime="2025-12-23">
-    m = re.search(r'<time[^>]+datetime=["\'](\d{4}-\d{2}-\d{2})', html)
+    # 4. First <time datetime="..."> in early body (article header area)
+    m = re.search(r'<time[^>]+datetime=["\'](\d{4}-\d{2}-\d{2})', early)
     if m:
         return m.group(1)
-
-    # 4. Russian date in text: "23 декабря 2025"
-    for prefix, num in MONTHS_RU.items():
-        match = re.search(rf"(\d{{1,2}})\s+{prefix}\S*\s+(20\d{{2}})", html, re.IGNORECASE)
-        if match:
-            return f"{match.group(2)}-{num}-{match.group(1).zfill(2)}"
-
-    # 5. DD.MM.YYYY
-    m = re.search(r"(\d{1,2})\.(\d{1,2})\.(20\d{2})", html)
-    if m:
-        return f"{m.group(3)}-{m.group(2).zfill(2)}-{m.group(1).zfill(2)}"
 
     return ""
 
