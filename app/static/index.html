@@ -32,7 +32,7 @@
             padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
         label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.88rem; color: #334155; }
-        .hint { font-size: 0.8rem; color: #c5cdd8; margin-bottom: 8px; }
+        .hint { font-size: 0.8rem; color: #94a3b8; margin-bottom: 8px; }
         textarea {
             width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px;
             font-size: 0.95rem; resize: none; min-height: 48px; font-family: inherit;
@@ -537,11 +537,11 @@
     function getHistory() {
         try { return JSON.parse(localStorage.getItem('brandSearchHistory') || '[]'); } catch { return []; }
     }
-    function saveToHistory(brands) {
+    function saveToHistory(brands, industry) {
         let h = getHistory();
-        const key = brands.join(', ');
+        const key = `${brands.join(', ')}${industry ? ' · ' + industry : ''}`;
         h = h.filter(x => x.key !== key);
-        h.unshift({ key, brands, ts: Date.now() });
+        h.unshift({ key, brands, industry, ts: Date.now() });
         if (h.length > 10) h = h.slice(0, 10);
         localStorage.setItem('brandSearchHistory', JSON.stringify(h));
         renderHistory();
@@ -554,7 +554,7 @@
     function loadHistory(idx) {
         const h = getHistory()[idx]; if (!h) return;
         document.getElementById('brands').value = h.brands.join(', ');
-        // Restore brands only
+        if (h.industry) document.getElementById('industry').value = h.industry;
     }
     function renderHistory() {
         const h = getHistory(), sec = document.getElementById('historySection'),
@@ -613,7 +613,7 @@
         btn.disabled = true; loading.classList.add('active');
         results.classList.remove('active'); error.classList.remove('active');
         results.innerHTML = '';
-        document.getElementById('loading').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 
         // Render brand progress list
         const brandsDiv = document.getElementById('loadingBrands');
@@ -666,7 +666,7 @@
             allResults.forEach(b => b.events.forEach(e => allCats.add(e.impact_category || 'other')));
             filters.categories = allCats;
             sortBy = 'date';
-            saveToHistory(brands);
+            saveToHistory(brands, industry);
             renderResults(allResults);
         }
 
@@ -692,6 +692,18 @@
     function toggleEvent(brandIdx, evIdx) {
         const key = `${brandIdx}-${evIdx}`;
         excluded.has(key) ? excluded.delete(key) : excluded.add(key);
+        renderPanels();
+    }
+
+    function selectAllEvents() {
+        excluded.clear();
+        renderPanels();
+    }
+
+    function deselectAllEvents() {
+        if (!lastResults) return;
+        excluded = new Set();
+        lastResults.forEach((br, i) => br.events.forEach((_, j) => excluded.add(`${i}-${j}`)));
         renderPanels();
     }
 
@@ -730,6 +742,8 @@
                 </div>
                 <button class="btn btn-csv btn-sm" onclick="downloadCsv()">Скачать CSV</button>
                 <button class="btn btn-outline btn-sm" onclick="togglePreview()">Предпросмотр</button>
+                <button class="btn btn-outline btn-sm" onclick="selectAllEvents()">Выбрать все</button>
+                <button class="btn btn-outline btn-sm" onclick="deselectAllEvents()">Снять все</button>
             </div>
             <div id="csvPreviewWrap" class="hidden"></div>
         `;
