@@ -81,7 +81,7 @@ SYSTEM_PROMPT = """\
 
 Для каждого оставшегося события укажи:
 - event_name: краткое название события
-- event_date: дата в формате YYYY-MM-DD (если неизвестна — YYYY-MM-01)
+- event_date: дата в формате YYYY-MM-DD. ПРИОРИТЕТ: 1) дата из URL (отмечена как [дата из URL: ...]), 2) дата из текста сниппета, 3) если ничего нет — оставь пустую строку "". НЕ ВЫДУМЫВАЙ даты!
 - description: 1-2 предложения
 - impact_category: СТРОГО одно из: market_exit, rebrand, new_product, supply, ad_campaign, scandal, sanctions, price_change, management, merger, pharma_registration, pharma_clinical, pharma_safety (или custom_N если событие связано с пользовательской темой)
 - impact_score: ЦЕЛОЕ число от 1 до 5, насколько событие повлияло на бизнес-метрики бренда (выручку, продажи, узнаваемость). 1=минимальное влияние, 5=критическое (уход с рынка, крупный скандал, ребрендинг)
@@ -167,8 +167,10 @@ def _analyze_with_mistral(
             cat_label = custom_queries[idx] if idx < len(custom_queries) else cat
         else:
             cat_label = EVENT_TYPES.get(cat, {}).get("label", cat)
+        url_date = _date_from_url(r["href"])
+        date_hint = f" [дата из URL: {url_date}]" if url_date else ""
         formatted.append(
-            f"{i}. [{cat_label}] {r['title']}\n"
+            f"{i}. [{cat_label}] {r['title']}{date_hint}\n"
             f"   URL: {r['href']}\n"
             f"   {r['body']}"
         )
@@ -346,3 +348,24 @@ def _extract_date(text: str) -> str:
 def _domain(url: str) -> str:
     m = re.search(r"https?://(?:www\.)?([^/]+)", url)
     return m.group(1) if m else ""
+
+
+def _date_from_url(url: str) -> str:
+    """Extract YYYY-MM-DD from URL patterns."""
+    # /YYYY/MM/DD/
+    m = re.search(r"/(20\d{2})/(\d{1,2})/(\d{1,2})(?:/|\b)", url)
+    if m:
+        return f"{m.group(1)}-{m.group(2).zfill(2)}-{m.group(3).zfill(2)}"
+    # /DD/MM/YYYY/ (e.g. РБК)
+    m = re.search(r"/(\d{1,2})/(\d{1,2})/(20\d{2})(?:/|\b)", url)
+    if m:
+        return f"{m.group(3)}-{m.group(2).zfill(2)}-{m.group(1).zfill(2)}"
+    # YYYY-MM-DD
+    m = re.search(r"(20\d{2})-(\d{2})-(\d{2})", url)
+    if m:
+        return m.group(0)
+    # /YYYY/MM/
+    m = re.search(r"/(20\d{2})/(\d{1,2})(?:/|\b)", url)
+    if m:
+        return f"{m.group(1)}-{m.group(2).zfill(2)}-01"
+    return ""
