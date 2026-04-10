@@ -334,7 +334,10 @@
         </div>
 
         <div id="historySection" class="history-section hidden">
-            <h3>История поисков</h3>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                <h3 style="margin:0">История поисков</h3>
+                <button class="btn btn-outline btn-sm" onclick="clearHistory()">Очистить</button>
+            </div>
             <div class="history-list" id="historyList"></div>
         </div>
 
@@ -549,6 +552,11 @@
     function removeHistory(idx) {
         let h = getHistory(); h.splice(idx, 1);
         localStorage.setItem('brandSearchHistory', JSON.stringify(h));
+        renderHistory();
+    }
+    function clearHistory() {
+        if (!confirm('Очистить всю историю поисков?')) return;
+        localStorage.removeItem('brandSearchHistory');
         renderHistory();
     }
     function loadHistory(idx) {
