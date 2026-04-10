@@ -5,6 +5,7 @@ import re
 import time
 from functools import partial
 
+import httpx
 from ddgs import DDGS
 from mistralai.client import Mistral
 
@@ -81,7 +82,7 @@ SYSTEM_PROMPT = """\
 
 Для каждого оставшегося события укажи:
 - event_name: краткое название события
-- event_date: дата в формате YYYY-MM-DD. ПРИОРИТЕТ: 1) дата из URL (отмечена как [дата из URL: ...]), 2) дата из текста сниппета, 3) если ничего нет — оставь пустую строку "". НЕ ВЫДУМЫВАЙ даты!
+- event_date: дата в формате YYYY-MM-DD. Используй [дата публикации: ...] если она есть в источнике. Если её нет — оставь пустую строку. НЕ ВЫДУМЫВАЙ даты!
 - description: 1-2 предложения
 - impact_category: СТРОГО одно из: market_exit, rebrand, new_product, supply, ad_campaign, scandal, sanctions, price_change, management, merger, pharma_registration, pharma_clinical, pharma_safety (или custom_N если событие связано с пользовательской темой)
 - impact_score: ЦЕЛОЕ число от 1 до 5, насколько событие повлияло на бизнес-метрики бренда (выручку, продажи, узнаваемость). 1=минимальное влияние, 5=критическое (уход с рынка, крупный скандал, ребрендинг)
@@ -167,8 +168,9 @@ def _analyze_with_mistral(
             cat_label = custom_queries[idx] if idx < len(custom_queries) else cat
         else:
             cat_label = EVENT_TYPES.get(cat, {}).get("label", cat)
-        url_date = _date_from_url(r["href"])
-        date_hint = f" [дата из URL: {url_date}]" if url_date else ""
+        # Prefer fetched date from page > date from URL
+        date = r.get("fetched_date") or _date_from_url(r["href"])
+        date_hint = f" [дата публикации: {date}]" if date else ""
         formatted.append(
             f"{i}. [{cat_label}] {r['title']}{date_hint}\n"
             f"   URL: {r['href']}\n"
@@ -267,9 +269,12 @@ async def search_brand_events(
     if not search_results:
         return BrandEventsResponse(brand=brand, events=[])
 
-    # Step 2: filter with Mistral (if API key provided)
-    # Limit input to ~30 results to avoid overloading Mistral context
+    # Step 2: enrich with article publication dates (parallel page fetch)
     mistral_input = search_results[:30]
+    await _enrich_with_dates(mistral_input)
+    logger.info(f"Brand '{brand}': enriched dates for {sum(1 for r in mistral_input if r.get('fetched_date'))}/{len(mistral_input)} articles")
+
+    # Step 3: filter with Mistral (if API key provided)
     if api_key:
         events = []
         for attempt in range(3):
@@ -348,6 +353,66 @@ def _extract_date(text: str) -> str:
 def _domain(url: str) -> str:
     m = re.search(r"https?://(?:www\.)?([^/]+)", url)
     return m.group(1) if m else ""
+
+
+async def _fetch_article_date(client: httpx.AsyncClient, url: str) -> str:
+    """Fetch article HTML and extract publication date."""
+    try:
+        resp = await client.get(url, timeout=5, follow_redirects=True,
+                                headers={"User-Agent": "Mozilla/5.0"})
+        if resp.status_code != 200:
+            return ""
+        html = resp.text[:50000]  # first 50KB
+    except Exception:
+        return ""
+
+    # 1. JSON-LD datePublished
+    m = re.search(r'"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})', html)
+    if m:
+        return m.group(1)
+
+    # 2. <meta property="article:published_time" content="2025-12-23...">
+    m = re.search(
+        r'<meta[^>]+(?:property|name)=["\'](?:article:published_time|pubdate|publishdate|date)["\'][^>]+content=["\']([^"\']+)',
+        html, re.IGNORECASE,
+    )
+    if not m:
+        m = re.search(
+            r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+(?:property|name)=["\'](?:article:published_time|pubdate|publishdate|date)["\']',
+            html, re.IGNORECASE,
+        )
+    if m:
+        date_str = m.group(1)
+        d = re.search(r"(\d{4})-(\d{2})-(\d{2})", date_str)
+        if d:
+            return d.group(0)
+
+    # 3. <time datetime="2025-12-23">
+    m = re.search(r'<time[^>]+datetime=["\'](\d{4}-\d{2}-\d{2})', html)
+    if m:
+        return m.group(1)
+
+    # 4. Russian date in text: "23 декабря 2025"
+    for prefix, num in MONTHS_RU.items():
+        match = re.search(rf"(\d{{1,2}})\s+{prefix}\S*\s+(20\d{{2}})", html, re.IGNORECASE)
+        if match:
+            return f"{match.group(2)}-{num}-{match.group(1).zfill(2)}"
+
+    # 5. DD.MM.YYYY
+    m = re.search(r"(\d{1,2})\.(\d{1,2})\.(20\d{2})", html)
+    if m:
+        return f"{m.group(3)}-{m.group(2).zfill(2)}-{m.group(1).zfill(2)}"
+
+    return ""
+
+
+async def _enrich_with_dates(results: list[dict]) -> None:
+    """Fetch all article pages in parallel and add 'fetched_date' field."""
+    async with httpx.AsyncClient() as client:
+        tasks = [_fetch_article_date(client, r["href"]) for r in results]
+        dates = await asyncio.gather(*tasks, return_exceptions=True)
+        for r, d in zip(results, dates):
+            r["fetched_date"] = d if isinstance(d, str) else ""
 
 
 def _date_from_url(url: str) -> str:
