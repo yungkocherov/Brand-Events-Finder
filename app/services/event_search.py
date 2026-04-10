@@ -13,6 +13,95 @@ from app.models import BrandEvent, BrandEventsResponse
 
 logger = logging.getLogger(__name__)
 
+# Trusted news sources used for filtering DDG results.
+# General-purpose Russian news outlets are always included.
+TRUSTED_GENERAL = {
+    "rbc.ru", "kommersant.ru", "vedomosti.ru", "forbes.ru", "tass.ru",
+    "ria.ru", "interfax.ru", "lenta.ru", "gazeta.ru", "iz.ru",
+    "rg.ru", "novayagazeta.ru", "expert.ru", "1prime.ru", "bfm.ru",
+    "thebell.io", "rbc.ua", "finmarket.ru", "finanz.ru", "bcs-express.ru",
+    "frankmedia.ru", "frankrg.com", "vc.ru", "cnews.ru", "tadviser.ru",
+    "secretmag.ru", "rusbase.com", "sostav.ru", "adindex.ru",
+    "reuters.com", "bloomberg.com", "ft.com",
+}
+
+# Industry-specific trusted sources.
+# Keys are lowercase substrings; matched against user-entered industry text.
+TRUSTED_BY_INDUSTRY = {
+    # Auto market
+    "автомоб": {"autonews.ru", "autoreview.ru", "zr.ru", "drive.ru",
+                "auto.ru", "kolesa.ru", "5koleso.ru", "motor.ru",
+                "quto.ru", "autostat.ru"},
+    "авто": {"autonews.ru", "autoreview.ru", "zr.ru", "drive.ru",
+             "auto.ru", "kolesa.ru", "5koleso.ru", "motor.ru",
+             "quto.ru", "autostat.ru"},
+    # Banks / finance
+    "банк": {"banki.ru", "frankmedia.ru", "frankrg.com", "bfm.ru",
+             "finanz.ru", "finmarket.ru", "1prime.ru", "bcs-express.ru",
+             "thebell.io", "pro.rbc.ru"},
+    "финанс": {"banki.ru", "frankmedia.ru", "frankrg.com", "finmarket.ru",
+               "1prime.ru", "bcs-express.ru", "thebell.io", "pro.rbc.ru",
+               "finanz.ru"},
+    # Insurance
+    "страхов": {"asn-news.ru", "insur-info.ru", "wiki-insurance.ru",
+                "insrev.ru", "banki.ru", "asn-news.ru", "insurancesummit.ru"},
+    # Food / FMCG / retail
+    "продукт": {"retail.ru", "new-retail.ru", "foodretail.ru", "sfera.fm",
+                "foodnewsweek.ru", "foodbay.com", "souzmoloko.ru",
+                "foodmarkets.ru", "milknews.ru", "agrobook.ru"},
+    "питан": {"retail.ru", "new-retail.ru", "foodretail.ru", "sfera.fm",
+              "foodnewsweek.ru", "foodbay.com", "souzmoloko.ru",
+              "foodmarkets.ru", "milknews.ru", "agrobook.ru"},
+    "напит": {"retail.ru", "new-retail.ru", "foodretail.ru", "sfera.fm",
+              "foodnewsweek.ru", "foodbay.com", "souzmoloko.ru",
+              "foodmarkets.ru", "milknews.ru", "agrobook.ru"},
+    "fmcg": {"retail.ru", "new-retail.ru", "foodretail.ru", "sfera.fm",
+             "foodmarkets.ru", "sostav.ru", "adindex.ru"},
+    # Pharma
+    "фарм": {"pharmvestnik.ru", "pharmprom.ru", "remedium.ru", "vademec.ru",
+             "apteka.ru", "pharmacopoeia.ru", "pharmacology.kz",
+             "garant.ru", "rosminzdrav.ru", "rspchm.ru", "rlsnet.ru"},
+    "лекарств": {"pharmvestnik.ru", "pharmprom.ru", "remedium.ru", "vademec.ru",
+                 "apteka.ru", "rlsnet.ru", "garant.ru", "rosminzdrav.ru"},
+    # Telecom / IT
+    "телеком": {"comnews.ru", "cnews.ru", "tadviser.ru", "iksmedia.ru",
+                "roem.ru", "habr.com"},
+    "it": {"cnews.ru", "tadviser.ru", "comnews.ru", "iksmedia.ru",
+           "roem.ru", "habr.com", "rusbase.com", "vc.ru"},
+    # Real estate / construction
+    "недвиж": {"cian.ru", "mirkvartir.ru", "bn.ru", "vsenovostroyki.ru",
+               "domclick.ru"},
+    "строит": {"stroygaz.ru", "vestnikstroy.ru", "construction.ru"},
+    # Energy
+    "энерг": {"oilcapital.ru", "neftegaz.ru", "oil.gov.ru", "energyland.info",
+              "rusenergetika.ru"},
+    "нефт": {"oilcapital.ru", "neftegaz.ru", "rupec.ru", "oilru.com"},
+    # Marketing / advertising
+    "реклам": {"sostav.ru", "adindex.ru", "advertology.ru", "marketing.by"},
+    "маркетинг": {"sostav.ru", "adindex.ru", "marketing.hse.ru", "advertology.ru"},
+}
+
+
+def _get_trusted_domains(industry: str) -> set[str]:
+    """Return general + industry-specific trusted domains."""
+    domains = set(TRUSTED_GENERAL)
+    if industry:
+        ind_lower = industry.lower()
+        for key, sites in TRUSTED_BY_INDUSTRY.items():
+            if key in ind_lower:
+                domains |= sites
+    return domains
+
+
+def _is_trusted(url: str, trusted: set[str]) -> bool:
+    """Check if URL belongs to a trusted domain."""
+    m = re.search(r"https?://(?:www\.)?([^/]+)", url)
+    if not m:
+        return False
+    host = m.group(1).lower()
+    return any(host == d or host.endswith("." + d) for d in trusted)
+
+
 CATEGORY_LABELS = {
     "market_exit": "Уход / приход на рынок",
     "rebrand": "Ребрендинг / смена названия",
@@ -76,24 +165,29 @@ SEARCH_QUERY_TEMPLATES = [
 
 
 def _search_ddg(brand: str, industry: str = "") -> list[dict]:
-    """Search DuckDuckGo with broad queries about the brand."""
+    """Search DuckDuckGo with broad queries, filter by trusted news sites."""
     all_results = []
     seen_urls = set()
     industry_part = industry if industry else ""
+    trusted = _get_trusted_domains(industry)
 
     queries = [t.format(brand=brand, industry=industry_part).strip() for t in SEARCH_QUERY_TEMPLATES]
 
     with DDGS() as ddgs:
         for query in queries:
             try:
-                results = list(ddgs.text(query, max_results=15, region="ru-ru"))
+                # Request more results since we filter many out
+                results = list(ddgs.text(query, max_results=25, region="ru-ru"))
             except Exception as e:
                 logger.error(f"DDG search failed: {e}")
                 results = []
 
+            kept = 0
             for r in results:
                 url = r.get("href", "")
                 if not url or url in seen_urls:
+                    continue
+                if not _is_trusted(url, trusted):
                     continue
                 seen_urls.add(url)
                 all_results.append({
@@ -101,8 +195,9 @@ def _search_ddg(brand: str, industry: str = "") -> list[dict]:
                     "href": url,
                     "body": r.get("body", "").strip(),
                 })
+                kept += 1
 
-            logger.info(f"DDG: {len(results)} results for '{query}'")
+            logger.info(f"DDG: {kept}/{len(results)} kept (trusted) for '{query}'")
             time.sleep(0.5)
 
     return all_results
