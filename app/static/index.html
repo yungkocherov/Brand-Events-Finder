@@ -9,6 +9,16 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; }
+        .top-links {
+            position: fixed; top: 16px; right: 20px; z-index: 100;
+            display: flex; gap: 12px; font-size: 0.85rem;
+        }
+        .top-links a {
+            padding: 6px 12px; background: #fff; border: 1px solid #e2e8f0;
+            border-radius: 8px; color: #475569; text-decoration: none;
+            transition: all 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+        .top-links a:hover { color: #4338ca; border-color: #c7d2fe; background: #eef2ff; }
         .container { max-width: 1080px; margin: 0 auto; padding: 40px 24px; }
 
         /* Header */
@@ -316,6 +326,10 @@
     </style>
 </head>
 <body>
+    <div class="top-links">
+        <a href="https://t.me/yan_kocherov" target="_blank" rel="noopener" title="Telegram">@yan_kocherov</a>
+        <a href="https://github.com/yungkocherov/brand_events" target="_blank" rel="noopener" title="GitHub">GitHub</a>
+    </div>
     <div class="container">
         <div class="header">
             <h1>Brand Events Finder</h1>
