@@ -14,7 +14,9 @@ class BrandEvent(BaseModel):
     event_name: str
     event_date: str
     description: str
-    impact_category: str  # revenue, awareness, reputation, operations, legal
+    # One of: market_exit, rebrand, new_product, supply, ad_campaign,
+    # scandal, sanctions, price_change, management, merger, other
+    impact_category: str = "other"
     impact_score: int = 3  # 1-5: estimated impact on business metrics
     sentiment: str = "neutral"  # positive, negative, neutral
     source_url: str

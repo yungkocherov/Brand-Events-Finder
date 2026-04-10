@@ -1,6 +1,7 @@
 import asyncio
 import csv
 import io
+import logging
 import re
 from datetime import date, timedelta
 
@@ -13,7 +14,13 @@ from pydantic import BaseModel
 from app.models import BrandRequest, SearchResponse, CsvRequest
 from app.services.event_search import search_brand_events
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+
 app = FastAPI(title="Brand Events Finder")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 
 @app.get("/")
@@ -73,10 +80,7 @@ async def export_csv(request: CsvRequest):
             if month > 12:
                 month = 1
                 year += 1
-            try:
-                current = current.replace(year=year, month=month, day=1)
-            except ValueError:
-                current = current.replace(year=year, month=month, day=1)
+            current = current.replace(year=year, month=month, day=1)
         else:
             current += timedelta(days=1)
 
@@ -161,6 +165,3 @@ def _parse_date(date_str: str) -> date | None:
         return date(int(m.group(1)), 1, 1)
 
     return None
-
-
-app.mount("/static", StaticFiles(directory="app/static"), name="static")

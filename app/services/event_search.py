@@ -335,13 +335,15 @@ def _raw_to_events(brand: str, results: list[dict]) -> list[BrandEvent]:
     """Fallback: convert raw search results to events without AI."""
     events = []
     for r in results:
-        date_str = _extract_date(f"{r['title']} {r['body']}")
+        date_str = r.get("fetched_date") or _date_from_url(r["href"]) \
+            or _extract_date(f"{r['title']} {r['body']}")
         events.append(BrandEvent(
             brand=brand,
             event_name=r["title"],
             event_date=date_str,
             description=r["body"],
-            impact_category=r["category"],
+            impact_category="other",
+            impact_score=3,
             sentiment="neutral",
             source_url=r["href"],
             source_title=_domain(r["href"]),
@@ -385,13 +387,178 @@ def _domain(url: str) -> str:
     return m.group(1) if m else ""
 
 
+# Per-domain HTML date extraction rules.
+# Each rule is a regex; the first capture group must yield a parseable date
+# (YYYY-MM-DD, DD.MM.YYYY, or "18 декабря 2023" — all normalised by _normalise_date).
+#
+# IMPORTANT: rules are applied to a NARROW article-header window (a slice of
+# HTML around the first <h1>), not to the whole page. This guarantees we pick
+# the article's own publication date instead of a date from the sidebar,
+# "related news" block, footer copyright, or comments. If the window-scoped
+# search finds nothing, we fall back to the whole document only for the
+# strictest patterns (JSON-LD, head meta).
+#
+# Therefore broad regexes like `\d{1,2}\.\d{1,2}\.20\d{2}` ARE safe here:
+# their search area is bounded.
+SITE_DATE_RULES: dict[str, list[str]] = {
+    "vc.ru": [
+        r'"date_publish_iso"\s*:\s*"(\d{4}-\d{2}-\d{2})',
+        r'data-date=["\'](\d{4}-\d{2}-\d{2})',
+    ],
+    "insur-info.ru": [
+        # CMS-specific: <I CLASS="grey">7 июля 2022 г.</I> sits directly above
+        # the article title on every press page.
+        r'<I\s+CLASS=["\']grey["\'][^>]*>\s*(\d{1,2}\s+(?:январ|феврал|март|апрел|ма[яй]|июн|июл|август|сентябр|октябр|ноябр|декабр)\S*\s+20\d{2})',
+        r'press[_-]?date[^>]*>\s*(\d{1,2}\.\d{1,2}\.20\d{2})',
+        r'class=["\'][^"\']*date[^"\']*["\'][^>]*>\s*(\d{1,2}\.\d{1,2}\.20\d{2})',
+    ],
+    "asn-news.ru": [
+        r'class=["\'][^"\']*date[^"\']*["\'][^>]*>\s*(\d{1,2}\.\d{1,2}\.20\d{2})',
+        r'pubdate[^>]*>\s*(\d{1,2}\.\d{1,2}\.20\d{2})',
+        r'(\d{1,2}\s+(?:январ|феврал|март|апрел|ма[яй]|июн|июл|август|сентябр|октябр|ноябр|декабр)\S*\s+20\d{2})',
+    ],
+    "tass.ru": [
+        r'data-time=["\'](\d{4}-\d{2}-\d{2})',
+    ],
+    "rbc.ru": [
+        r'content=["\'](\d{4}-\d{2}-\d{2})T[^"\']*["\'][^>]+article:published_time',
+    ],
+    "kommersant.ru": [
+        r'datetime=["\'](\d{4}-\d{2}-\d{2})',
+    ],
+    "banki.ru": [
+        r'(\d{1,2}\.\d{1,2}\.20\d{2})',
+    ],
+    "frankmedia.ru": [
+        r'datetime=["\'](\d{4}-\d{2}-\d{2})',
+    ],
+    # Forum/wiki-style site: the topic post itself sits in `.comment.newstopic`
+    # and stamps its date in <small>DD.MM.YYYY...</small>. Comments below use
+    # <span> instead, so the <small> form is unique to the topic-creator post.
+    "foodmarkets.ru": [
+        r'class=["\']comment\s+newstopic["\'][\s\S]{0,8000}?<small>\s*(\d{1,2}\.\d{1,2}\.20\d{2})',
+        r'<small>\s*(\d{1,2}\.\d{1,2}\.20\d{2})',
+    ],
+}
+
+
+# JSON-LD types that mark "this is THE article" — used to disambiguate when a
+# page has several JSON-LD blocks (e.g. WebSite + NewsArticle + BreadcrumbList).
+_LD_ARTICLE_TYPES_RE = re.compile(
+    r'"@type"\s*:\s*"(?:NewsArticle|Article|BlogPosting|Report|ReportageNewsArticle)"',
+    re.IGNORECASE,
+)
+
+
+def _normalise_date(s: str) -> str:
+    """Convert any of YYYY-MM-DD, DD.MM.YYYY, '18 декабря 2023' to YYYY-MM-DD."""
+    if not s:
+        return ""
+    s = s.strip()
+    m = re.search(r"(\d{4})-(\d{2})-(\d{2})", s)
+    if m:
+        return m.group(0)
+    m = re.search(r"(\d{1,2})\.(\d{1,2})\.(20\d{2})", s)
+    if m:
+        return f"{m.group(3)}-{m.group(2).zfill(2)}-{m.group(1).zfill(2)}"
+    for prefix, num in MONTHS_RU.items():
+        m = re.search(rf"(\d{{1,2}})\s+{prefix}\S*\s+(20\d{{2}})", s, re.IGNORECASE)
+        if m:
+            return f"{m.group(2)}-{num}-{m.group(1).zfill(2)}"
+    return ""
+
+
+def _site_rules_for(url: str) -> list[str]:
+    """Return per-site regex rules matching this URL's domain."""
+    host = _domain(url).lower()
+    for d, rules in SITE_DATE_RULES.items():
+        if host == d or host.endswith("." + d):
+            return rules
+    return []
+
+
+def _article_window(html: str) -> str:
+    """Return a slice of HTML that brackets the article header.
+
+    Publication dates on news sites almost always sit immediately above or
+    below the <h1>. Cropping to that area kills false positives from sidebar
+    widgets ("most read", "related news"), header navigation, footer
+    copyright, and comments.
+
+    Strategy:
+      1. Prefer the inside of <article>...</article> if present (capped).
+      2. Otherwise, take a window around the first <h1>: 600 chars before
+         and 2500 after — enough room for byline + date + lead paragraph.
+      3. Fallback: first 25 KB of the document.
+    """
+    # 1. <article> tag content
+    m = re.search(r"<article\b[^>]*>(.*?)</article>", html, re.DOTALL | re.IGNORECASE)
+    if m and len(m.group(1)) > 200:
+        return m.group(1)[:30000]
+
+    # 2. Window around first <h1>
+    h1 = re.search(r"<h1\b", html, re.IGNORECASE)
+    if h1:
+        start = max(0, h1.start() - 600)
+        end = min(len(html), h1.start() + 2500)
+        return html[start:end]
+
+    # 3. Fallback
+    return html[:25000]
+
+
+def _date_from_jsonld(html: str) -> str:
+    """Extract datePublished from a JSON-LD script that describes the article.
+
+    A page may host several <script type="application/ld+json"> blocks
+    (Article + WebSite + Organization + BreadcrumbList). Only the
+    Article-typed block carries the real publication date. We iterate the
+    blocks and prefer the one whose @type is an Article variant; if none
+    qualifies, fall back to the first datePublished anywhere.
+
+    Also explicitly looks for `datePublished` only (NOT `dateModified` —
+    those drift after edits and we want the original publication time).
+    """
+    blocks = re.findall(
+        r'<script[^>]+application/ld\+json[^>]*>(.*?)</script>',
+        html, re.DOTALL | re.IGNORECASE,
+    )
+    # First pass: Article-typed blocks
+    for block in blocks:
+        if not _LD_ARTICLE_TYPES_RE.search(block):
+            continue
+        m = re.search(r'"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})', block)
+        if m:
+            return m.group(1)
+    # Second pass: any block with datePublished
+    for block in blocks:
+        m = re.search(r'"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})', block)
+        if m:
+            return m.group(1)
+    return ""
+
+
 async def _fetch_article_date(client: httpx.AsyncClient, url: str) -> str:
     """Fetch article HTML and extract publication date.
 
-    Priority: URL date > <head> meta/JSON-LD > first <time> tag in article.
-    Avoids matching sidebar/comment dates by limiting HTML scan area.
+    Multiple dates often appear on a page (sidebar, related news, comments,
+    "updated" timestamps). We resolve this by:
+      - searching a NARROW article-header window first for site rules and
+        <time> tags;
+      - preferring JSON-LD blocks of @type Article over generic ones;
+      - using `article:published_time` over generic meta dates;
+      - explicitly NOT looking at `dateModified`.
+
+    Priority order:
+      1. Date encoded in the URL path (most reliable when present).
+      2. Site rule applied to the article-header window.
+      3. JSON-LD datePublished from an Article-typed block.
+      4. <head> meta `article:published_time` (or other publish meta).
+      5. First <time datetime="..."> inside the article window.
+      6. Site rule applied to the WHOLE document (last-resort widening).
+      7. Russian-text date near a "опубликовано" / "дата" marker in window.
     """
-    # 1. URL date is most reliable when present
+    # 1. URL date
     url_date = _date_from_url(url)
     if url_date:
         return url_date
@@ -405,35 +572,81 @@ async def _fetch_article_date(client: httpx.AsyncClient, url: str) -> str:
     except Exception:
         return ""
 
-    # Extract <head> for meta tags only
+    window = _article_window(html)
+    site_rules = _site_rules_for(url)
+
+    # 2. Site rules — only inside the article window (avoids sidebar/footer dates)
+    for pattern in site_rules:
+        m = re.search(pattern, window, re.IGNORECASE)
+        if m:
+            d = _normalise_date(m.group(1))
+            if d:
+                return d
+
+    # 3. JSON-LD datePublished from an Article-typed block
+    d = _date_from_jsonld(html)
+    if d:
+        return d
+
+    # 4. <head> meta tags — prefer article:published_time, then generic
     head_end = html.lower().find("</head>")
     head = html[:head_end] if head_end > 0 else html[:15000]
-
-    # 2. JSON-LD datePublished (in <head> or early body)
-    early = html[:20000]
-    m = re.search(r'"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})', early)
-    if m:
-        return m.group(1)
-
-    # 3. meta tags in <head>
-    m = re.search(
-        r'<meta[^>]+(?:property|name)=["\'](?:article:published_time|pubdate|publishdate|date|dc\.date)["\'][^>]+content=["\']([^"\']+)',
-        head, re.IGNORECASE,
-    )
-    if not m:
+    for prop_re in (
+        r"article:published_time",
+        r"(?:pubdate|publishdate|og:pubdate|dc\.date(?:\.issued)?|date)",
+    ):
         m = re.search(
-            r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+(?:property|name)=["\'](?:article:published_time|pubdate|publishdate|date|dc\.date)["\']',
+            rf'<meta[^>]+(?:property|name)=["\']{prop_re}["\'][^>]+content=["\']([^"\']+)',
             head, re.IGNORECASE,
         )
-    if m:
-        d = re.search(r"(\d{4})-(\d{2})-(\d{2})", m.group(1))
-        if d:
-            return d.group(0)
+        if not m:
+            m = re.search(
+                rf'<meta[^>]+content=["\']([^"\']+)["\'][^>]+(?:property|name)=["\']{prop_re}["\']',
+                head, re.IGNORECASE,
+            )
+        if m:
+            d = _normalise_date(m.group(1))
+            if d:
+                return d
 
-    # 4. First <time datetime="..."> in early body (article header area)
-    m = re.search(r'<time[^>]+datetime=["\'](\d{4}-\d{2}-\d{2})', early)
+    # 5. First <time datetime="..."> inside the article window
+    m = re.search(r'<time[^>]+datetime=["\'](\d{4}-\d{2}-\d{2})', window)
     if m:
         return m.group(1)
+
+    # 5b. og:title — many old-school CMS sites (insur-info.ru and similar)
+    # have a wrong <h1> (it's the section title, not the article title), so the
+    # window heuristic misses. But they ALWAYS encode the date in og:title:
+    #   <meta property="og:title" content="... | Source, 7 июля 2022 г." />
+    # This is distinctive enough to apply to the whole document.
+    og = re.search(
+        r'<meta[^>]+property=["\']og:title["\'][^>]+content=["\']([^"\']+)',
+        head, re.IGNORECASE,
+    )
+    if og:
+        d = _normalise_date(og.group(1))
+        if d:
+            return d
+
+    # 6. Site rules — last-resort widen to whole document
+    for pattern in site_rules:
+        m = re.search(pattern, html, re.IGNORECASE)
+        if m:
+            d = _normalise_date(m.group(1))
+            if d:
+                return d
+
+    # 7. Russian-text date near a publication marker, restricted to window
+    marker = re.search(
+        r'(?:опубликован|публикация|дата[^а-я]{0,8})[^<]{0,80}'
+        r'(\d{1,2}[\s.]+(?:январ|феврал|март|апрел|ма[яй]|июн|июл|август|сентябр|октябр|ноябр|декабр)\S*[\s.]+20\d{2}'
+        r'|\d{1,2}\.\d{1,2}\.20\d{2})',
+        window, re.IGNORECASE,
+    )
+    if marker:
+        d = _normalise_date(marker.group(1))
+        if d:
+            return d
 
     return ""
 

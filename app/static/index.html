@@ -22,34 +22,106 @@
         .container { max-width: 1080px; margin: 0 auto; padding: 40px 24px; }
 
         /* Header */
-        .header { text-align: center; margin-bottom: 32px; }
-        .header h1 { font-size: 2.1rem; font-weight: 700; color: #4338ca; margin-bottom: 6px; }
-        .header .subtitle { color: #64748b; font-size: 1rem; }
-
-        /* About */
-        .about {
-            background: linear-gradient(135deg, #eef2ff, #faf5ff);
-            border: 1px solid #e0e7ff; border-radius: 14px;
-            padding: 20px 26px; margin-bottom: 24px;
-            line-height: 1.65; color: #475569; font-size: 0.9rem;
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 {
+            font-size: 2.3rem; font-weight: 700; margin-bottom: 8px;
+            background: linear-gradient(90deg, #4f46e5, #8b5cf6);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .about strong { color: #4338ca; }
-        .about p + p { margin-top: 6px; }
+        .header .subtitle { color: #64748b; font-size: 1.02rem; }
 
-        /* Input */
+        /* Collapsible "How it works" — replaces the bulky about box */
+        .about-toggle {
+            max-width: 640px; margin: 14px auto 28px;
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+            padding: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            overflow: hidden;
+        }
+        .about-toggle summary {
+            padding: 12px 18px; cursor: pointer; font-size: 0.9rem;
+            color: #4338ca; font-weight: 600; list-style: none;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .about-toggle summary::-webkit-details-marker { display: none; }
+        .about-toggle summary::before {
+            content: '?'; width: 20px; height: 20px; border-radius: 50%;
+            background: #eef2ff; color: #4338ca; font-size: 0.78rem;
+            display: inline-flex; align-items: center; justify-content: center; font-weight: 700;
+        }
+        .about-toggle[open] summary { border-bottom: 1px solid #f1f5f9; }
+        .about-toggle .about-body {
+            padding: 14px 20px 18px; line-height: 1.65;
+            color: #475569; font-size: 0.88rem;
+        }
+        .about-toggle .about-body p + p { margin-top: 8px; }
+        .about-toggle .about-body a { color: #4338ca; }
+        .about-toggle .about-body .vpn-note { color: #94a3b8; font-size: 0.82rem; }
+
+        /* Input form */
         .input-section {
-            background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
-            padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 16px;
+            padding: 0; margin-bottom: 24px;
+            box-shadow: 0 4px 16px rgba(15,23,42,0.04);
+            overflow: hidden;
         }
+        /* API key block sits inside the input card as a subdued top strip */
+        .api-strip {
+            background: #fafafa; border-bottom: 1px solid #f1f5f9;
+            padding: 14px 22px;
+        }
+        .api-strip-head {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px;
+        }
+        .api-strip-title {
+            font-size: 0.78rem; font-weight: 600; color: #64748b;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .api-strip-hint {
+            font-size: 0.75rem; color: #94a3b8;
+        }
+        .api-strip-hint a { color: #4338ca; text-decoration: none; }
+        .api-strip-hint a:hover { text-decoration: underline; }
+        .api-input-row {
+            display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+        }
+        .api-input-row input[type="password"] {
+            flex: 1; min-width: 220px;
+            padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 9px;
+            font-size: 0.88rem; font-family: inherit; background: #fff;
+        }
+        .api-input-row select {
+            padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 9px;
+            font-size: 0.85rem; background: #fff; font-family: inherit;
+        }
+
+        .form-body { padding: 22px 24px 24px; }
+        .form-grid {
+            display: grid; grid-template-columns: 2fr 1fr; gap: 18px;
+            margin-bottom: 18px;
+        }
+        @media (max-width: 640px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+        .form-field { display: flex; flex-direction: column; }
         label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.88rem; color: #334155; }
-        .hint { font-size: 0.8rem; color: #94a3b8; margin-bottom: 8px; }
-        textarea {
-            width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px;
-            font-size: 0.95rem; resize: none; min-height: 48px; font-family: inherit;
+        .hint { font-size: 0.78rem; color: #94a3b8; margin-bottom: 8px; }
+        textarea, .form-field input[type="text"] {
+            width: 100%; padding: 11px 13px; border: 1px solid #cbd5e1; border-radius: 10px;
+            font-size: 0.95rem; font-family: inherit;
             background: #fff; color: #1e293b;
         }
-        textarea:focus { outline: none; border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129,140,248,0.12); }
+        textarea { resize: vertical; min-height: 80px; }
+        textarea:focus, .form-field input[type="text"]:focus {
+            outline: none; border-color: #818cf8; box-shadow: 0 0 0 3px rgba(129,140,248,0.12);
+        }
         textarea::placeholder, input::placeholder { color: #a0aec0; }
+        .btn-search {
+            width: 100%; padding: 13px 24px; font-size: 0.95rem;
+            box-shadow: 0 2px 8px rgba(79,70,229,0.25);
+        }
+        .btn-search:hover { box-shadow: 0 4px 14px rgba(79,70,229,0.35); }
 
         .controls-row { display: flex; gap: 14px; align-items: end; flex-wrap: wrap; margin-top: 14px; }
         .field { display: flex; flex-direction: column; gap: 3px; }
@@ -149,11 +221,17 @@
         }
         .timeline-event:hover { transform: scale(1.5); }
         .timeline-event { background: #818cf8; }
-        .timeline-event.revenue { background: #f59e0b; }
-        .timeline-event.awareness { background: #3b82f6; }
-        .timeline-event.reputation { background: #ec4899; }
-        .timeline-event.operations { background: #22c55e; }
-        .timeline-event.legal { background: #ef4444; }
+        .timeline-event.market_exit  { background: #ef4444; }
+        .timeline-event.rebrand      { background: #8b5cf6; }
+        .timeline-event.new_product  { background: #22c55e; }
+        .timeline-event.supply       { background: #f97316; }
+        .timeline-event.ad_campaign  { background: #3b82f6; }
+        .timeline-event.scandal      { background: #dc2626; }
+        .timeline-event.sanctions    { background: #b91c1c; }
+        .timeline-event.price_change { background: #f59e0b; }
+        .timeline-event.management   { background: #6366f1; }
+        .timeline-event.merger       { background: #0ea5e9; }
+        .timeline-event.other        { background: #94a3b8; }
         .timeline-labels {
             display: flex; justify-content: space-between;
             font-size: 0.75rem; color: #94a3b8; margin-top: 8px;
@@ -207,11 +285,6 @@
         .chip-positive { background: #dcfce7; color: #166534; }
         .chip-negative { background: #fee2e2; color: #991b1b; }
         .chip-neutral  { background: #f1f5f9; color: #475569; }
-        .chip-revenue     { background: #fef3c7; color: #92400e; }
-        .chip-awareness   { background: #dbeafe; color: #1e40af; }
-        .chip-reputation  { background: #fce7f3; color: #9d174d; }
-        .chip-operations  { background: #d1fae5; color: #065f46; }
-        .chip-legal       { background: #fee2e2; color: #991b1b; }
 
         /* Brand panel */
         .brand-panel { display: none; }
@@ -247,12 +320,17 @@
             font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
             letter-spacing: 0.4px; padding: 2px 8px; border-radius: 5px;
         }
-        .cat-revenue     { background: #fef3c7; color: #92400e; }
-        .cat-awareness   { background: #dbeafe; color: #1e40af; }
-        .cat-reputation  { background: #fce7f3; color: #9d174d; }
-        .cat-operations  { background: #d1fae5; color: #065f46; }
-        .cat-legal       { background: #fee2e2; color: #991b1b; }
-        .cat-other       { background: #f1f5f9; color: #475569; }
+        .cat-market_exit  { background: #fee2e2; color: #991b1b; }
+        .cat-rebrand      { background: #ede9fe; color: #5b21b6; }
+        .cat-new_product  { background: #dcfce7; color: #166534; }
+        .cat-supply       { background: #ffedd5; color: #9a3412; }
+        .cat-ad_campaign  { background: #dbeafe; color: #1e40af; }
+        .cat-scandal      { background: #fee2e2; color: #b91c1c; }
+        .cat-sanctions    { background: #fecaca; color: #7f1d1d; }
+        .cat-price_change { background: #fef3c7; color: #92400e; }
+        .cat-management   { background: #e0e7ff; color: #3730a3; }
+        .cat-merger       { background: #e0f2fe; color: #075985; }
+        .cat-other        { background: #f1f5f9; color: #475569; }
         .sent-positive   { background: #dcfce7; color: #166534; }
         .sent-negative   { background: #fee2e2; color: #991b1b; }
         .sent-neutral    { background: #f1f5f9; color: #64748b; }
@@ -336,16 +414,14 @@
             <p class="subtitle">Поиск событий, влияющих на бизнес-метрики брендов</p>
         </div>
 
-        <div class="about">
-            <p><strong>Как это работает:</strong> вы вводите названия брендов, указываете отрасль и выбираете типы событий.
-            Сервис ищет в новостных источниках события, которые могли повлиять на бизнес-метрики:
-            выручку, узнаваемость, репутацию, операционную деятельность.</p>
-            <p>AI-агент (Mistral) фильтрует результаты и оставляет только релевантные события.
-            Для этого нужен бесплатный API-ключ — получите за минуту на
-            <a href="https://console.mistral.ai" target="_blank" style="color:#4338ca">console.mistral.ai</a>.
-            Без ключа результаты будут менее точными.
-            <br><span style="color:#94a3b8">Для работы с Mistral API из России может потребоваться VPN.</span></p>
-        </div>
+        <details class="about-toggle">
+            <summary>Как это работает</summary>
+            <div class="about-body">
+                <p>Сервис ищет в доверенных новостных источниках события, которые могли повлиять на выручку, узнаваемость, репутацию и операционную деятельность брендов. AI-агент Mistral фильтрует выдачу, оценивает влияние (1–5) и тональность каждого события, а затем результаты можно выгрузить в CSV для использования в моделях.</p>
+                <p>Нужен бесплатный API-ключ Mistral — получите за минуту на <a href="https://console.mistral.ai" target="_blank">console.mistral.ai</a>. Ключ хранится только в вашем браузере.</p>
+                <p class="vpn-note">Для работы с Mistral API из России может потребоваться VPN.</p>
+            </div>
+        </details>
 
         <div id="historySection" class="history-section hidden">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -356,34 +432,41 @@
         </div>
 
         <div class="input-section">
-            <label for="apiKey">Mistral API Key</label>
-            <p class="hint">Бесплатный ключ для AI-фильтрации. Получите на <a href="https://console.mistral.ai" target="_blank" style="color:#4338ca">console.mistral.ai</a>. Сохраняется только в вашем браузере.</p>
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
-                <input type="password" id="apiKey" placeholder="Вставьте API-ключ"
-                       style="flex:1;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:0.9rem;font-family:inherit">
-                <select id="modelSelect" style="padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:0.85rem;font-family:inherit">
-                    <option value="mistral-medium-latest">Medium (лучшая)</option>
-                    <option value="mistral-small-latest">Small (точная)</option>
-                    <option value="open-mistral-nemo">Nemo (быстрая)</option>
-                </select>
-                <button class="btn btn-outline btn-sm" onclick="checkApiKey()" id="checkKeyBtn">Проверить</button>
-                <span id="keyStatus" style="font-size:0.82rem"></span>
+            <div class="api-strip">
+                <div class="api-strip-head">
+                    <span class="api-strip-title">Mistral API Key</span>
+                    <span class="api-strip-hint">Хранится только в браузере · <a href="https://console.mistral.ai" target="_blank">получить ключ</a></span>
+                </div>
+                <div class="api-input-row">
+                    <input type="password" id="apiKey" placeholder="Вставьте API-ключ">
+                    <select id="modelSelect" title="Модель Mistral">
+                        <option value="mistral-medium-latest">Medium (лучшая)</option>
+                        <option value="mistral-small-latest">Small (точная)</option>
+                        <option value="open-mistral-nemo">Nemo (быстрая)</option>
+                    </select>
+                    <button class="btn btn-outline btn-sm" onclick="checkApiKey()" id="checkKeyBtn">Проверить</button>
+                    <span id="keyStatus" style="font-size:0.82rem"></span>
+                </div>
+                <p class="field-error-text" id="apiKeyError" style="margin-top:6px">Введите API-ключ Mistral</p>
             </div>
-            <p class="field-error-text" id="apiKeyError">Введите API-ключ Mistral</p>
 
-            <label for="brands" style="margin-top:14px">Бренды</label>
-            <p class="hint">Названия компаний или продуктов через запятую</p>
-            <textarea id="brands" placeholder="Нурофен, Терафлю, Добрый, Exeed"></textarea>
-            <p class="field-error-text" id="brandsError">Введите хотя бы один бренд</p>
+            <div class="form-body">
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="brands">Бренды</label>
+                        <p class="hint">Названия компаний или продуктов через запятую</p>
+                        <textarea id="brands" placeholder="Нурофен, Терафлю, Добрый, Exeed"></textarea>
+                        <p class="field-error-text" id="brandsError">Введите хотя бы один бренд</p>
+                    </div>
+                    <div class="form-field">
+                        <label for="industry">Отрасль</label>
+                        <p class="hint">Отсеивает однофамильцев из других сфер</p>
+                        <input type="text" id="industry" placeholder="фармацевтика, напитки, автомобили">
+                        <p class="field-error-text" id="industryError">Укажите отрасль</p>
+                    </div>
+                </div>
 
-            <label for="industry" style="margin-top:14px">Отрасль</label>
-            <p class="hint">Помогает отсеять однофамильцев из других сфер</p>
-            <input type="text" id="industry" placeholder="фармацевтика, напитки, автомобили, банки..."
-                   style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:0.9rem;font-family:inherit">
-            <p class="field-error-text" id="industryError">Укажите отрасль</p>
-
-            <div class="controls-row" style="margin-top:16px">
-                <button class="btn btn-primary" id="searchBtn" onclick="startSearch()">Найти события</button>
+                <button class="btn btn-primary btn-search" id="searchBtn" onclick="startSearch()">Найти события</button>
             </div>
         </div>
 
@@ -557,10 +640,10 @@
         results.classList.remove('active'); error.classList.remove('active');
         results.innerHTML = '';
 
-        // Render brand progress list
+        // Render brand progress list (id keyed by brand name to match backend response)
         const brandsDiv = document.getElementById('loadingBrands');
         brandsDiv.innerHTML = brands.map(b =>
-            `<div class="loading-brand" id="lb-${toSnakeCase(b)}">
+            `<div class="loading-brand" id="lb-${brandLbId(b)}">
                 <span class="lb-icon">&#9679;</span>
                 <span>${esc(b)}</span>
                 <span class="lb-detail">ожидание</span>
@@ -572,38 +655,40 @@
             window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         });
 
-        const allResults = [];
-
-        for (const brand of brands) {
-            const lbId = `lb-${toSnakeCase(brand)}`;
-            const lb = document.getElementById(lbId);
-
-            // Mark active
+        // Mark all brands as in-progress (they run in parallel on the backend)
+        brands.forEach(b => {
+            const lb = document.getElementById(`lb-${brandLbId(b)}`);
             if (lb) { lb.className = 'loading-brand active'; lb.querySelector('.lb-detail').textContent = 'поиск...'; }
+        });
 
-            try {
-                const resp = await fetch('/api/search', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ brands: [brand], industry, api_key: apiKey, model }),
-                });
-                if (!resp.ok) throw new Error(await resp.text());
-                const data = await resp.json();
-                const brandResult = data.results[0];
-                allResults.push(brandResult);
+        let allResults = [];
+        try {
+            const resp = await fetch('/api/search', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ brands, industry, api_key: apiKey, model }),
+            });
+            if (!resp.ok) throw new Error(await resp.text());
+            const data = await resp.json();
+            allResults = data.results || [];
 
-                if (lb) {
-                    lb.className = 'loading-brand done';
-                    lb.querySelector('.lb-icon').innerHTML = '&#10003;';
-                    lb.querySelector('.lb-detail').textContent = `${brandResult.events.length} событий`;
-                }
-            } catch (e) {
-                if (lb) {
-                    lb.className = 'loading-brand error';
-                    lb.querySelector('.lb-icon').innerHTML = '&#10007;';
-                    lb.querySelector('.lb-detail').textContent = 'ошибка';
-                }
-                allResults.push({ brand, events: [] });
-            }
+            allResults.forEach(br => {
+                const lb = document.getElementById(`lb-${brandLbId(br.brand)}`);
+                if (!lb) return;
+                lb.className = 'loading-brand done';
+                lb.querySelector('.lb-icon').innerHTML = '&#10003;';
+                lb.querySelector('.lb-detail').textContent = `${br.events.length} событий`;
+            });
+        } catch (e) {
+            brands.forEach(b => {
+                const lb = document.getElementById(`lb-${brandLbId(b)}`);
+                if (!lb) return;
+                lb.className = 'loading-brand error';
+                lb.querySelector('.lb-icon').innerHTML = '&#10007;';
+                lb.querySelector('.lb-detail').textContent = 'ошибка';
+            });
+            error.textContent = 'Ошибка запроса: ' + e.message;
+            error.classList.add('active');
+            allResults = brands.map(b => ({ brand: b, events: [] }));
         }
 
         if (allResults.length) {
@@ -612,7 +697,6 @@
             const allCats = new Set();
             allResults.forEach(b => b.events.forEach(e => allCats.add(e.impact_category || 'other')));
             filters.categories = allCats;
-            sortBy = 'date';
             saveToHistory(brands, industry);
             renderResults(allResults);
         }
@@ -738,6 +822,11 @@
         });
 
         container.classList.add('active');
+        // Sync the select dropdown with the current sortBy state — the <select>
+        // re-mounts on every renderResults and would otherwise revert to its
+        // first option, drifting away from the actual sort state.
+        const sel = document.getElementById('sortSelect');
+        if (sel) sel.value = sortBy;
         renderFilterChips();
         renderPanels();
         renderTimeline();
@@ -748,8 +837,7 @@
         const allCats = new Set();
         if (lastResults) lastResults.forEach(b => b.events.forEach(e => allCats.add(e.impact_category || 'other')));
         catWrap.innerHTML = [...allCats].map(c =>
-            `<label class="chip ${filters.categories.has(c)?'':'off'}"
-                    style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe"
+            `<label class="chip cat-${c} ${filters.categories.has(c)?'':'off'}"
                     onclick="toggleFilter('cat','${c}')">
                 ${esc(getCatLabel(c))}</label>`
         ).join('');
@@ -812,7 +900,7 @@
         events.forEach((ev, i) => {
             const pct = range === 1 ? 50 : ((new Date(ev.event_date) - new Date(minDate)) / range) * 90 + 5;
             const cat = ev.impact_category || 'other';
-            dots += `<div class="timeline-event" style="position:absolute;left:${pct}%;background:var(--dot-color,#818cf8)"
+            dots += `<div class="timeline-event ${cat}" style="position:absolute;left:${pct}%"
                 data-tip="${esc(ev.event_date)}: ${esc(ev.event_name)}"
                 onmouseenter="showTip(event,this)" onmouseleave="hideTip()"></div>`;
         });
@@ -830,8 +918,12 @@
         const tip = document.getElementById('tooltip');
         tip.textContent = el.dataset.tip;
         tip.classList.add('visible');
-        tip.style.left = e.pageX + 10 + 'px';
-        tip.style.top = e.pageY - 30 + 'px';
+        // Tooltip is position:fixed → use viewport coords, not pageX/pageY
+        // (those include scroll offset and would push the tooltip below the fold).
+        const x = Math.min(e.clientX + 12, window.innerWidth - 300);
+        const y = Math.max(e.clientY - 36, 8);
+        tip.style.left = x + 'px';
+        tip.style.top = y + 'px';
     }
     function hideTip() { document.getElementById('tooltip').classList.remove('visible'); }
 
@@ -917,6 +1009,14 @@
     }
 
     function esc(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+
+    // Brand → DOM id. Uses base64 of utf-8 bytes so identical brand strings always
+    // map to the same id (no collisions from snake_case normalisation).
+    function brandLbId(brand) {
+        try {
+            return btoa(unescape(encodeURIComponent(brand))).replace(/=+$/,'').replace(/\+/g,'-').replace(/\//g,'_');
+        } catch { return brand.replace(/[^a-z0-9]/gi,'_'); }
+    }
     </script>
 </body>
 </html>
