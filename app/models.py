@@ -17,6 +17,7 @@ class BrandEvent(BaseModel):
     event_date: str
     description: str
     impact_category: str  # revenue, awareness, reputation, operations, legal
+    impact_score: int = 3  # 1-5: estimated impact on business metrics
     sentiment: str = "neutral"  # positive, negative, neutral
     source_url: str
     source_title: str

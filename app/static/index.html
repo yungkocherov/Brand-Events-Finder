@@ -228,6 +228,9 @@
             font-size: 0.78rem; color: #6d28d9; white-space: nowrap;
             background: #ede9fe; padding: 2px 8px; border-radius: 5px; font-weight: 500;
         }
+        .impact-score {
+            font-size: 0.85rem; color: #f59e0b; letter-spacing: 1px; cursor: help;
+        }
         .event-description { color: #64748b; font-size: 0.85rem; margin-bottom: 8px; line-height: 1.55; }
         .event-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .event-badge {
@@ -397,8 +400,8 @@
     let lastResults = null;
     let activeTab = 0;
     let filters = { categories: new Set() };
-    let sortBy = 'date';
-    let sortAsc = true;
+    let sortBy = 'impact';
+    let sortAsc = false;
     let excluded = new Set();
 
     function getCatLabel(key) { return eventTypesData[key] || key; }
@@ -698,6 +701,7 @@
         const dir = sortAsc ? 1 : -1;
         if (sortBy === 'date') events.sort((a,b) => dir * (a.event_date||'').localeCompare(b.event_date||''));
         else if (sortBy === 'category') events.sort((a,b) => dir * (a.impact_category||'').localeCompare(b.impact_category||''));
+        else if (sortBy === 'impact') events.sort((a,b) => dir * ((a.impact_score||0) - (b.impact_score||0)));
         return events;
     }
 
@@ -756,6 +760,7 @@
                 <div class="filter-group" id="filterCat"></div>
                 <label style="margin-left:auto">Сортировка:</label>
                 <select onchange="setSort(this.value)" id="sortSelect">
+                    <option value="impact">По влиянию</option>
                     <option value="date">По дате</option>
                     <option value="category">По категории</option>
                 </select>
@@ -811,7 +816,10 @@
                     <div class="event-body">
                         <div class="event-header">
                             <span class="event-title">${esc(ev.event_name)}</span>
-                            <span class="event-date">${esc(ev.event_date)}</span>
+                            <span style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+                                <span class="impact-score" title="Влияние на метрики: ${ev.impact_score||3}/5">${'★'.repeat(ev.impact_score||3)}${'☆'.repeat(5-(ev.impact_score||3))}</span>
+                                <span class="event-date">${esc(ev.event_date)}</span>
+                            </span>
                         </div>
                         <p class="event-description">${esc(ev.description)}</p>
                         <div class="event-meta">

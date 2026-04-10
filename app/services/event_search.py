@@ -84,6 +84,7 @@ SYSTEM_PROMPT = """\
 - event_date: дата в формате YYYY-MM-DD (если неизвестна — YYYY-MM-01)
 - description: 1-2 предложения
 - impact_category: СТРОГО одно из: market_exit, rebrand, new_product, supply, ad_campaign, scandal, sanctions, price_change, management, merger, pharma_registration, pharma_clinical, pharma_safety, custom
+- impact_score: ЦЕЛОЕ число от 1 до 5, насколько событие повлияло на бизнес-метрики бренда (выручку, продажи, узнаваемость). 1=минимальное влияние, 5=критическое (уход с рынка, крупный скандал, ребрендинг)
 - sentiment: СТРОГО одно из: positive, negative, neutral
 - source_url: URL из результатов поиска
 - source_title: домен источника
@@ -94,7 +95,8 @@ SYSTEM_PROMPT = """\
     "event_name": "...",
     "event_date": "YYYY-MM-DD",
     "description": "...",
-    "impact_category": "market_exit|rebrand|new_product|supply|ad_campaign|scandal|sanctions|price_change|management|merger|pharma_registration|pharma_clinical|pharma_safety",
+    "impact_category": "market_exit|rebrand|new_product|supply|ad_campaign|scandal|sanctions|price_change|management|merger|pharma_registration|pharma_clinical|pharma_safety|custom",
+    "impact_score": 1-5,
     "sentiment": "positive|negative|neutral",
     "source_url": "https://...",
     "source_title": "..."
@@ -210,6 +212,7 @@ def _parse_events(text: str, brand: str) -> list[BrandEvent]:
                 event_date=item.get("event_date", ""),
                 description=item.get("description", ""),
                 impact_category=item.get("impact_category", "other"),
+                impact_score=int(item.get("impact_score", 3)) if str(item.get("impact_score", "")).isdigit() else 3,
                 sentiment=item.get("sentiment", "neutral"),
                 source_url=item.get("source_url", ""),
                 source_title=item.get("source_title", ""),
@@ -267,7 +270,7 @@ async def search_brand_events(
     else:
         events = _raw_to_events(brand, search_results)
 
-    events.sort(key=lambda e: e.event_date)
+    events.sort(key=lambda e: (-e.impact_score, e.event_date))
     logger.info(f"Brand '{brand}': {len(events)} events after filtering")
     return BrandEventsResponse(brand=brand, events=events)
 
