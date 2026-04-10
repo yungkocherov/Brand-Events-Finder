@@ -13,59 +13,18 @@ from app.models import BrandEvent, BrandEventsResponse
 
 logger = logging.getLogger(__name__)
 
-EVENT_TYPES = {
-    "market_exit": {
-        "label": "Уход / приход на рынок",
-        "keywords": "уход с рынка закрытие выход приход",
-    },
-    "rebrand": {
-        "label": "Ребрендинг / смена названия",
-        "keywords": "ребрендинг смена названия логотип",
-    },
-    "new_product": {
-        "label": "Запуск нового продукта",
-        "keywords": "запуск новый продукт релиз линейка",
-    },
-    "supply": {
-        "label": "Перебои с поставками / дефицит",
-        "keywords": "дефицит перебои поставки нехватка",
-    },
-    "ad_campaign": {
-        "label": "Крупная рекламная кампания",
-        "keywords": "рекламная кампания спонсорство амбассадор",
-    },
-    "scandal": {
-        "label": "Крупный скандал / суд",
-        "keywords": "скандал суд штраф иск",
-    },
-    "sanctions": {
-        "label": "Санкции / ограничения",
-        "keywords": "санкции ограничения запрет блокировка",
-    },
-    "price_change": {
-        "label": "Изменение цен",
-        "keywords": "повышение цен подорожание скидки",
-    },
-    "management": {
-        "label": "Смена собственника / руководства",
-        "keywords": "смена CEO директор руководство назначение",
-    },
-    "merger": {
-        "label": "Слияние / поглощение",
-        "keywords": "слияние поглощение покупка сделка",
-    },
-    "pharma_registration": {
-        "label": "Регистрация / отзыв препарата",
-        "keywords": "регистрация отзыв препарат Минздрав",
-    },
-    "pharma_clinical": {
-        "label": "Клинические исследования",
-        "keywords": "клинические исследования испытания эффективность",
-    },
-    "pharma_safety": {
-        "label": "Безопасность / побочные эффекты",
-        "keywords": "побочные эффекты безопасность отзыв партии Росздравнадзор",
-    },
+CATEGORY_LABELS = {
+    "market_exit": "Уход / приход на рынок",
+    "rebrand": "Ребрендинг / смена названия",
+    "new_product": "Запуск нового продукта",
+    "supply": "Перебои с поставками / дефицит",
+    "ad_campaign": "Рекламная кампания",
+    "scandal": "Скандал / суд",
+    "sanctions": "Санкции / ограничения",
+    "price_change": "Изменение цен",
+    "management": "Смена руководства",
+    "merger": "Слияние / поглощение",
+    "other": "Другое",
 }
 
 SYSTEM_PROMPT = """\
@@ -84,7 +43,7 @@ SYSTEM_PROMPT = """\
 - event_name: краткое название события
 - event_date: ТОЛЬКО дата в формате YYYY-MM-DD (например "2024-03-15"). БЕЗ скобок, БЕЗ слов "дата публикации". Если есть [дата публикации: X] в источнике — извлеки оттуда X. Если даты нет — оставь "". НЕ ВЫДУМЫВАЙ даты!
 - description: 1-2 предложения
-- impact_category: СТРОГО одно из: market_exit, rebrand, new_product, supply, ad_campaign, scandal, sanctions, price_change, management, merger, pharma_registration, pharma_clinical, pharma_safety (или custom_N если событие связано с пользовательской темой)
+- impact_category: СТРОГО одно из: market_exit (уход/приход на рынок), rebrand (ребрендинг), new_product (новый продукт), supply (перебои поставок/дефицит), ad_campaign (реклама), scandal (скандал/суд), sanctions (санкции), price_change (изменение цен), management (смена руководства), merger (слияние), other (другое)
 - impact_score: ЦЕЛОЕ число от 1 до 5, насколько событие повлияло на бизнес-метрики бренда (выручку, продажи, узнаваемость). 1=минимальное влияние, 5=критическое (уход с рынка, крупный скандал, ребрендинг)
 - sentiment: СТРОГО одно из: positive, negative, neutral
 - source_url: URL из результатов поиска
@@ -96,7 +55,7 @@ SYSTEM_PROMPT = """\
     "event_name": "...",
     "event_date": "YYYY-MM-DD",
     "description": "...",
-    "impact_category": "market_exit|rebrand|new_product|supply|ad_campaign|scandal|sanctions|price_change|management|merger|pharma_registration|pharma_clinical|pharma_safety|custom",
+    "impact_category": "market_exit|rebrand|new_product|supply|ad_campaign|scandal|sanctions|price_change|management|merger|other",
     "impact_score": 1-5,
     "sentiment": "positive|negative|neutral",
     "source_url": "https://...",
@@ -107,28 +66,27 @@ SYSTEM_PROMPT = """\
 Если ни один результат не подходит — верни пустой массив []."""
 
 
-def _search_ddg(
-    brand: str, event_types: list[str], industry: str = "",
-    custom_queries: list[str] | None = None,
-) -> list[dict]:
-    """Search DuckDuckGo with one query per event type + custom queries."""
+SEARCH_QUERY_TEMPLATES = [
+    '"{brand}" {industry} новости события',
+    '"{brand}" {industry} скандал суд кризис санкции',
+    '"{brand}" {industry} запуск ребрендинг сделка',
+    '"{brand}" {industry} уход с рынка приход выход закрытие',
+    '"{brand}" {industry} цены подорожание дефицит перебои поставки',
+]
+
+
+def _search_ddg(brand: str, industry: str = "") -> list[dict]:
+    """Search DuckDuckGo with broad queries about the brand."""
     all_results = []
     seen_urls = set()
-    industry_suffix = f" {industry}" if industry else ""
+    industry_part = industry if industry else ""
 
-    # Build query list: standard types + custom
-    queries = []
-    for et in event_types:
-        cfg = EVENT_TYPES.get(et)
-        if cfg:
-            queries.append((f'"{brand}" {cfg["keywords"]}{industry_suffix}', et))
-    for i, cq in enumerate(custom_queries or []):
-        queries.append((f'"{brand}" {cq}{industry_suffix}', f"custom_{i}"))
+    queries = [t.format(brand=brand, industry=industry_part).strip() for t in SEARCH_QUERY_TEMPLATES]
 
     with DDGS() as ddgs:
-        for query, category in queries:
+        for query in queries:
             try:
-                results = list(ddgs.text(query, max_results=10, region="ru-ru"))
+                results = list(ddgs.text(query, max_results=15, region="ru-ru"))
             except Exception as e:
                 logger.error(f"DDG search failed: {e}")
                 results = []
@@ -142,10 +100,9 @@ def _search_ddg(
                     "title": r.get("title", "").strip(),
                     "href": url,
                     "body": r.get("body", "").strip(),
-                    "category": category,
                 })
 
-            logger.info(f"DDG: {len(results)} results for '{brand}' [{et}]")
+            logger.info(f"DDG: {len(results)} results for '{query}'")
             time.sleep(0.5)
 
     return all_results
@@ -154,46 +111,23 @@ def _search_ddg(
 def _analyze_with_mistral(
     api_key: str, brand: str, search_results: list[dict],
     industry: str = "", model: str = "open-mistral-nemo",
-    custom_queries: list[str] | None = None,
 ) -> str:
     """Use Mistral to filter and structure search results."""
     client = Mistral(api_key=api_key)
 
-    custom_queries = custom_queries or []
     formatted = []
     for i, r in enumerate(search_results, 1):
-        cat = r["category"]
-        if cat.startswith("custom_"):
-            idx = int(cat.split("_")[1])
-            cat_label = custom_queries[idx] if idx < len(custom_queries) else cat
-        else:
-            cat_label = EVENT_TYPES.get(cat, {}).get("label", cat)
-        # Prefer fetched date from page > date from URL
         date = r.get("fetched_date") or _date_from_url(r["href"])
         date_hint = f" [дата публикации: {date}]" if date else ""
         formatted.append(
-            f"{i}. [{cat_label}] {r['title']}{date_hint}\n"
+            f"{i}. {r['title']}{date_hint}\n"
             f"   URL: {r['href']}\n"
             f"   {r['body']}"
         )
     search_text = "\n\n".join(formatted)
 
     industry_note = f" (отрасль: {industry})" if industry else ""
-
-    # Build extended category list including custom ones
-    custom_note = ""
-    if custom_queries:
-        custom_list = ", ".join(f'custom_{i}={q!r}' for i, q in enumerate(custom_queries))
-        custom_note = (
-            f"\n\nКАСТОМНЫЕ КАТЕГОРИИ: {custom_list}\n"
-            f"ВАЖНО: Каждый результат поиска показан с [категорией] в начале. "
-            f"Если у результата в скобках указана пользовательская тема "
-            f"(например [Невыплаты]), ты ОБЯЗАН использовать соответствующий "
-            f"custom_N как impact_category, а не стандартную категорию. "
-            f"СОХРАНЯЙ категорию из входных данных, не пытайся переклассифицировать!"
-        )
-
-    prompt = SYSTEM_PROMPT.format(brand=brand, industry_note=industry_note) + custom_note
+    prompt = SYSTEM_PROMPT.format(brand=brand, industry_note=industry_note)
 
     response = client.chat.complete(
         model=model,
@@ -254,21 +188,16 @@ def _parse_events(text: str, brand: str) -> list[BrandEvent]:
 
 async def search_brand_events(
     brand: str,
-    event_types: list[str] | None = None,
-    custom_queries: list[str] | None = None,
     api_key: str = "",
     industry: str = "",
     model: str = "open-mistral-nemo",
 ) -> BrandEventsResponse:
-    if not event_types:
-        event_types = list(EVENT_TYPES.keys())
-
     loop = asyncio.get_event_loop()
-    logger.info(f"Searching '{brand}', industry='{industry}', types: {event_types}")
+    logger.info(f"Searching '{brand}', industry='{industry}'")
 
     # Step 1: DDG search
     search_results = await loop.run_in_executor(
-        None, partial(_search_ddg, brand, event_types, industry, custom_queries or [])
+        None, partial(_search_ddg, brand, industry)
     )
 
     logger.info(f"Brand '{brand}': {len(search_results)} raw results")
@@ -280,13 +209,13 @@ async def search_brand_events(
     await _enrich_with_dates(mistral_input)
     logger.info(f"Brand '{brand}': enriched dates for {sum(1 for r in mistral_input if r.get('fetched_date'))}/{len(mistral_input)} articles")
 
-    # Step 3: filter with Mistral (if API key provided)
+    # Step 3: filter with Mistral
     if api_key:
         events = []
         for attempt in range(3):
             try:
                 ai_response = await loop.run_in_executor(
-                    None, partial(_analyze_with_mistral, api_key, brand, mistral_input, industry, model, custom_queries or [])
+                    None, partial(_analyze_with_mistral, api_key, brand, mistral_input, industry, model)
                 )
                 events = _parse_events(ai_response, brand)
                 if events:
@@ -301,15 +230,6 @@ async def search_brand_events(
             events = _raw_to_events(brand, search_results)
     else:
         events = _raw_to_events(brand, search_results)
-
-    # Override impact_category from source URL — preserve original search category
-    # Mistral sometimes reclassifies events to "better fitting" standard categories,
-    # but we want to keep the category that was used to find the article.
-    url_to_category = {r["href"]: r["category"] for r in search_results}
-    for ev in events:
-        src_cat = url_to_category.get(ev.source_url)
-        if src_cat:
-            ev.impact_category = src_cat
 
     events.sort(key=lambda e: (-e.impact_score, e.event_date))
     logger.info(f"Brand '{brand}': {len(events)} events after filtering")

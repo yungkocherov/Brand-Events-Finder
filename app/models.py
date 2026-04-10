@@ -5,8 +5,6 @@ from datetime import date
 class BrandRequest(BaseModel):
     brands: list[str]
     industry: str = ""
-    event_types: list[str] = []
-    custom_queries: list[str] = []
     api_key: str = ""
     model: str = "open-mistral-nemo"
 

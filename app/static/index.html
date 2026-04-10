@@ -382,12 +382,7 @@
                    style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:0.9rem;font-family:inherit">
             <p class="field-error-text" id="industryError">Укажите отрасль</p>
 
-            <label style="margin-top:16px">Типы событий</label>
-            <p class="hint">Выберите, какие события искать. Чем меньше — тем быстрее и точнее.</p>
-            <div class="event-types-grid" id="eventTypesGrid" style="border-radius:10px;padding:2px"></div>
-            <p class="field-error-text" id="eventTypesError">Выберите хотя бы один тип</p>
-
-            <div class="controls-row">
+            <div class="controls-row" style="margin-top:16px">
                 <button class="btn btn-primary" id="searchBtn" onclick="startSearch()">Найти события</button>
             </div>
         </div>
@@ -416,74 +411,30 @@
     let sortAsc = false;
     let excluded = new Set();
 
-    function getCatLabel(key) {
-        if (key && key.startsWith('custom_')) {
-            const idx = parseInt(key.split('_')[1]);
-            return customQueries[idx] || key;
-        }
-        return eventTypesData[key] || key;
-    }
+    const CATEGORY_LABELS = {
+        market_exit: 'Уход / приход на рынок',
+        rebrand: 'Ребрендинг',
+        new_product: 'Новый продукт',
+        supply: 'Перебои поставок',
+        ad_campaign: 'Реклама',
+        scandal: 'Скандал / суд',
+        sanctions: 'Санкции',
+        price_change: 'Изменение цен',
+        management: 'Смена руководства',
+        merger: 'Слияние / поглощение',
+        other: 'Другое',
+    };
 
-    let eventTypesData = {};
-    let checkedStandardET = new Set();
+    function getCatLabel(key) {
+        return CATEGORY_LABELS[key] || key || 'Другое';
+    }
 
     // --- Init ---
-    (async function init() {
+    (function init() {
         renderHistory();
-
-        // Restore API key from localStorage
         const savedKey = localStorage.getItem('mistralApiKey') || '';
         document.getElementById('apiKey').value = savedKey;
-
-        try {
-            const resp = await fetch('/api/event-types');
-            eventTypesData = await resp.json();
-            renderEventTypes();
-        } catch (e) { console.error('Failed to load event types', e); }
     })();
-
-    function renderEventTypes() {
-        const grid = document.getElementById('eventTypesGrid');
-        const keys = Object.keys(eventTypesData);
-        const standardCards = keys.map(k =>
-            `<label class="et-item" id="et-${k}" onclick="toggleET('${k}')">
-                <input type="checkbox" data-et="${k}"> ${esc(eventTypesData[k])}
-            </label>`
-        ).join('');
-        const customCards = customQueries.map((q, i) =>
-            `<label class="et-item checked" id="cq-${i}">
-                <input type="checkbox" data-cq="${i}" checked>
-                <span style="flex:1">${esc(q)}</span>
-                <span style="cursor:pointer;color:#94a3b8;font-weight:700;padding:0 4px" onclick="event.stopPropagation();removeCustomET(${i})">×</span>
-            </label>`
-        ).join('');
-        const customInput = `
-            <label class="et-item" style="cursor:default" onclick="event.stopPropagation()">
-                <span style="color:#818cf8;font-weight:700;font-size:1.1rem">+</span>
-                <input type="text" id="customEventType" placeholder="Свой тип..."
-                       onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomET()}"
-                       style="flex:1;border:none;outline:none;background:transparent;font-size:0.88rem;font-family:inherit;padding:0">
-            </label>`;
-        grid.innerHTML = standardCards + customCards + customInput + `
-            <div class="et-actions" style="grid-column:1/-1">
-                <span class="et-link" onclick="setAllET(true)">Выбрать все</span>
-                <span class="et-link" onclick="setAllET(false)">Снять все</span>
-            </div>`;
-        // Restore checked state for standard items
-        document.querySelectorAll('[data-et]').forEach(cb => {
-            const checked = checkedStandardET.has(cb.dataset.et);
-            cb.checked = checked;
-            document.getElementById(`et-${cb.dataset.et}`).classList.toggle('checked', checked);
-        });
-    }
-
-    function toggleET(key) {
-        const cb = document.querySelector(`[data-et="${key}"]`);
-        cb.checked = !cb.checked;
-        document.getElementById(`et-${key}`).classList.toggle('checked', cb.checked);
-        if (cb.checked) checkedStandardET.add(key);
-        else checkedStandardET.delete(key);
-    }
 
     async function checkApiKey() {
         const key = document.getElementById('apiKey').value.trim();
@@ -530,37 +481,6 @@
         }
     }
 
-    function setAllET(val) {
-        document.querySelectorAll('[data-et]').forEach(cb => {
-            cb.checked = val;
-            document.getElementById(`et-${cb.dataset.et}`).classList.toggle('checked', val);
-            if (val) checkedStandardET.add(cb.dataset.et);
-            else checkedStandardET.delete(cb.dataset.et);
-        });
-    }
-
-    function getSelectedET() {
-        return [...document.querySelectorAll('[data-et]:checked')].map(cb => cb.dataset.et);
-    }
-
-    let customQueries = [];
-
-    function addCustomET() {
-        const input = document.getElementById('customEventType');
-        const val = input.value.trim();
-        if (!val) return;
-        customQueries.push(val);
-        renderEventTypes();
-        document.getElementById('customEventType').focus();
-    }
-
-    function removeCustomET(idx) {
-        customQueries.splice(idx, 1);
-        renderEventTypes();
-    }
-
-    function getCustomQueries() { return [...customQueries]; }
-
     // --- History ---
     function getHistory() {
         try { return JSON.parse(localStorage.getItem('brandSearchHistory') || '[]'); } catch { return []; }
@@ -604,8 +524,6 @@
     function clearValidation() {
         document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
         document.querySelectorAll('.field-error-text').forEach(el => el.classList.remove('visible'));
-        const grid = document.getElementById('eventTypesGrid');
-        if (grid) grid.style.outline = '';
     }
     function showFieldError(inputId, errorId) {
         document.getElementById(inputId).classList.add('field-error');
@@ -627,14 +545,6 @@
 
         const industry = document.getElementById('industry').value.trim();
         if (!industry) { showFieldError('industry', 'industryError'); hasError = true; }
-
-        const eventTypes = getSelectedET();
-        const customQ = getCustomQueries();
-        if (!eventTypes.length && !customQ.length) {
-            document.getElementById('eventTypesGrid').style.outline = '2px solid #ef4444';
-            document.getElementById('eventTypesError').classList.add('visible');
-            hasError = true;
-        }
 
         if (hasError) return;
 
@@ -674,7 +584,7 @@
             try {
                 const resp = await fetch('/api/search', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ brands: [brand], industry, event_types: eventTypes, custom_queries: customQ, api_key: apiKey, model }),
+                    body: JSON.stringify({ brands: [brand], industry, api_key: apiKey, model }),
                 });
                 if (!resp.ok) throw new Error(await resp.text());
                 const data = await resp.json();

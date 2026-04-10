@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app.models import BrandRequest, SearchResponse, CsvRequest
-from app.services.event_search import search_brand_events, EVENT_TYPES
+from app.services.event_search import search_brand_events
 
 app = FastAPI(title="Brand Events Finder")
 
@@ -19,11 +19,6 @@ app = FastAPI(title="Brand Events Finder")
 @app.get("/")
 async def index():
     return FileResponse("app/static/index.html")
-
-
-@app.get("/api/event-types")
-async def get_event_types():
-    return {k: v["label"] for k, v in EVENT_TYPES.items()}
 
 
 class CheckKeyRequest(BaseModel):
@@ -54,7 +49,7 @@ async def check_key(request: CheckKeyRequest):
 @app.post("/api/search", response_model=SearchResponse)
 async def search_events(request: BrandRequest):
     tasks = [
-        search_brand_events(brand, request.event_types, request.custom_queries, request.api_key, request.industry, request.model)
+        search_brand_events(brand, request.api_key, request.industry, request.model)
         for brand in request.brands
     ]
     results = await asyncio.gather(*tasks)
